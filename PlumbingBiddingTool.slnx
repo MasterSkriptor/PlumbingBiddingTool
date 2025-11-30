@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PlumbingBiddingTool.Application/PlumbingBiddingTool.Application.csproj" />
+    <Project Path="src/PlumbingBiddingTool.Domain/PlumbingBiddingTool.Domain.csproj" />
+    <Project Path="src/PlumbingBiddingTool.Infrastructure/PlumbingBiddingTool.Infrastructure.csproj" />
+    <Project Path="src/PlumbingBiddingTool.Web/PlumbingBiddingTool.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PlumbingBiddingTool.Application.Tests/PlumbingBiddingTool.Application.Tests.csproj" />
+    <Project Path="tests/PlumbingBiddingTool.Domain.Tests/PlumbingBiddingTool.Domain.Tests.csproj" />
+    <Project Path="tests/PlumbingBiddingTool.Infrastructure.Tests/PlumbingBiddingTool.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
