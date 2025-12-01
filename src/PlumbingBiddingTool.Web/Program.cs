@@ -1,6 +1,7 @@
 using PlumbingBiddingTool.Web.Components;
 using Microsoft.EntityFrameworkCore;
 using PlumbingBiddingTool.Application.BidItems;
+using PlumbingBiddingTool.Application.FixtureItems;
 using PlumbingBiddingTool.Domain.Repositories;
 using PlumbingBiddingTool.Infrastructure.Data;
 using PlumbingBiddingTool.Infrastructure.Repositories;
@@ -18,9 +19,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Register repositories
 builder.Services.AddScoped<IBidItemRepository, BidItemRepository>();
+builder.Services.AddScoped<IFixtureItemRepository, FixtureItemRepository>();
 
 // Register application services
 builder.Services.AddScoped<BidItemService>();
+builder.Services.AddScoped<FixtureItemService>();
 
 var app = builder.Build();
 
@@ -28,7 +31,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
 // Configure the HTTP request pipeline.

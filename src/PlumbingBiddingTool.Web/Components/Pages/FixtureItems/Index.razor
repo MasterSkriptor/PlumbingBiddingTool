@@ -1,0 +1,202 @@
+@page "/fixtureitems"
+@using PlumbingBiddingTool.Application.FixtureItems
+@using PlumbingBiddingTool.Domain.Entities
+@inject FixtureItemService FixtureItemService
+@rendermode InteractiveServer
+
+<PageTitle>Fixture Items</PageTitle>
+
+<h1>Fixture Items</h1>
+
+<button class="btn btn-primary mb-3" @onclick="ShowAddForm">Add New Fixture Item</button>
+
+@if (showForm)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">@(editingFixtureItem?.Id > 0 ? "Edit" : "Add") Fixture Item</h5>
+            <EditForm Model="editingFixtureItem" OnValidSubmit="SaveFixtureItem">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="editingFixtureItem!.Name" />
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Select Bid Items</label>
+                    <div class="border p-3" style="max-height: 300px; overflow-y: auto;">
+                        @foreach (var bidItem in availableBidItems)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="bidItem_@bidItem.Id"
+                                       checked="@selectedBidItemIds.Contains(bidItem.Id)"
+                                       @onchange="@(e => ToggleBidItem(bidItem.Id, e.Value))" />
+                                <label class="form-check-label" for="bidItem_@bidItem.Id">
+                                    @bidItem.Name - $@bidItem.Price.ToString("F2")
+                                </label>
+                            </div>
+                        }
+                    </div>
+                    @if (availableBidItems.Count == 0)
+                    {
+                        <p class="text-muted mt-2">No bid items available. Please create some bid items first.</p>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <strong>Total Price: $@CalculateSelectedPrice().ToString("F2")</strong>
+                </div>
+
+                <div>
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (fixtureItems == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (fixtureItems.Count == 0)
+{
+    <p><em>No fixture items found. Click "Add New Fixture Item" to create one.</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Bid Items</th>
+                <th>Total Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in fixtureItems)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td>
+                        @if (item.BidItems.Any())
+                        {
+                            <ul class="mb-0">
+                                @foreach (var bidItem in item.BidItems)
+                                {
+                                    <li>@bidItem.Name ($@bidItem.Price.ToString("F2"))</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <em>No bid items</em>
+                        }
+                    </td>
+                    <td>$@item.Price.ToString("F2")</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" @onclick="() => EditFixtureItem(item)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteFixtureItem(item.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<FixtureItem> fixtureItems = new();
+    private List<BidItem> availableBidItems = new();
+    private FixtureItem? editingFixtureItem;
+    private List<int> selectedBidItemIds = new();
+    private bool showForm = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        fixtureItems = (await FixtureItemService.GetAllFixtureItemsAsync()).ToList();
+        availableBidItems = (await FixtureItemService.GetAvailableBidItemsAsync()).ToList();
+    }
+
+    private void ShowAddForm()
+    {
+        editingFixtureItem = new FixtureItem();
+        selectedBidItemIds.Clear();
+        showForm = true;
+    }
+
+    private void EditFixtureItem(FixtureItem item)
+    {
+        editingFixtureItem = new FixtureItem
+        {
+            Id = item.Id,
+            Name = item.Name
+        };
+        selectedBidItemIds = item.BidItems.Select(bi => bi.Id).ToList();
+        showForm = true;
+    }
+
+    private async Task SaveFixtureItem()
+    {
+        if (editingFixtureItem == null) return;
+
+        if (editingFixtureItem.Id == 0)
+        {
+            await FixtureItemService.CreateFixtureItemAsync(editingFixtureItem.Name, selectedBidItemIds);
+        }
+        else
+        {
+            await FixtureItemService.UpdateFixtureItemAsync(editingFixtureItem.Id, editingFixtureItem.Name, selectedBidItemIds);
+        }
+
+        await LoadData();
+        CancelEdit();
+    }
+
+    private async Task DeleteFixtureItem(int id)
+    {
+        await FixtureItemService.DeleteFixtureItemAsync(id);
+        await LoadData();
+    }
+
+    private void CancelEdit()
+    {
+        editingFixtureItem = null;
+        selectedBidItemIds.Clear();
+        showForm = false;
+    }
+
+    private void ToggleBidItem(int bidItemId, object? isChecked)
+    {
+        if (isChecked is bool checkedValue)
+        {
+            if (checkedValue)
+            {
+                if (!selectedBidItemIds.Contains(bidItemId))
+                {
+                    selectedBidItemIds.Add(bidItemId);
+                }
+            }
+            else
+            {
+                selectedBidItemIds.Remove(bidItemId);
+            }
+        }
+    }
+
+    private decimal CalculateSelectedPrice()
+    {
+        return availableBidItems
+            .Where(bi => selectedBidItemIds.Contains(bi.Id))
+            .Sum(bi => bi.Price);
+    }
+}
