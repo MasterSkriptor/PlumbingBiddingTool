@@ -1,0 +1,139 @@
+@page "/biditems"
+@using PlumbingBiddingTool.Application.BidItems
+@using PlumbingBiddingTool.Domain.Entities
+@inject BidItemService BidItemService
+@rendermode InteractiveServer
+
+<PageTitle>Bid Items</PageTitle>
+
+<h1>Bid Items</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="ShowAddForm">Add New Bid Item</button>
+</div>
+
+@if (showForm)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">@(editingItem == null ? "Add New Bid Item" : "Edit Bid Item")</h5>
+            <EditForm Model="@formModel" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">Name:</label>
+                    <InputText class="form-control" @bind-Value="formModel.Name" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Price:</label>
+                    <InputNumber class="form-control" @bind-Value="formModel.Price" />
+                </div>
+
+                <button type="submit" class="btn btn-success">@(editingItem == null ? "Add" : "Update")</button>
+                <button type="button" class="btn btn-secondary" @onclick="CancelForm">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (bidItems == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!bidItems.Any())
+{
+    <p><em>No bid items found. Add your first bid item!</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in bidItems)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Price.ToString("C")</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" @onclick="() => EditItem(item)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteItem(item.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<BidItem>? bidItems;
+    private bool showForm = false;
+    private BidItem? editingItem = null;
+    private BidItemFormModel formModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBidItems();
+    }
+
+    private async Task LoadBidItems()
+    {
+        var items = await BidItemService.GetAllBidItemsAsync();
+        bidItems = items.ToList();
+    }
+
+    private void ShowAddForm()
+    {
+        editingItem = null;
+        formModel = new BidItemFormModel();
+        showForm = true;
+    }
+
+    private void EditItem(BidItem item)
+    {
+        editingItem = item;
+        formModel = new BidItemFormModel { Name = item.Name, Price = item.Price };
+        showForm = true;
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        editingItem = null;
+        formModel = new();
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (editingItem == null)
+        {
+            await BidItemService.CreateBidItemAsync(formModel.Name, formModel.Price);
+        }
+        else
+        {
+            await BidItemService.UpdateBidItemAsync(editingItem.Id, formModel.Name, formModel.Price);
+        }
+
+        await LoadBidItems();
+        CancelForm();
+    }
+
+    private async Task DeleteItem(int id)
+    {
+        await BidItemService.DeleteBidItemAsync(id);
+        await LoadBidItems();
+    }
+
+    private class BidItemFormModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+}

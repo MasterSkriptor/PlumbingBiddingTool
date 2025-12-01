@@ -1,4 +1,9 @@
 using PlumbingBiddingTool.Web.Components;
+using Microsoft.EntityFrameworkCore;
+using PlumbingBiddingTool.Application.BidItems;
+using PlumbingBiddingTool.Domain.Repositories;
+using PlumbingBiddingTool.Infrastructure.Data;
+using PlumbingBiddingTool.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,7 +11,25 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Configure Database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") 
+        ?? "Data Source=plumbingbidding.db"));
+
+// Register repositories
+builder.Services.AddScoped<IBidItemRepository, BidItemRepository>();
+
+// Register application services
+builder.Services.AddScoped<BidItemService>();
+
 var app = builder.Build();
+
+// Initialize database
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.EnsureCreated();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
