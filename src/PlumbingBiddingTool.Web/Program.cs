@@ -2,6 +2,8 @@ using PlumbingBiddingTool.Web.Components;
 using Microsoft.EntityFrameworkCore;
 using PlumbingBiddingTool.Application.BidItems;
 using PlumbingBiddingTool.Application.FixtureItems;
+using PlumbingBiddingTool.Application.Contractors;
+using PlumbingBiddingTool.Application.Jobs;
 using PlumbingBiddingTool.Domain.Repositories;
 using PlumbingBiddingTool.Infrastructure.Data;
 using PlumbingBiddingTool.Infrastructure.Repositories;
@@ -20,10 +22,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register repositories
 builder.Services.AddScoped<IBidItemRepository, BidItemRepository>();
 builder.Services.AddScoped<IFixtureItemRepository, FixtureItemRepository>();
+builder.Services.AddScoped<IContractorRepository, ContractorRepository>();
+builder.Services.AddScoped<IJobRepository, JobRepository>();
 
 // Register application services
 builder.Services.AddScoped<BidItemService>();
 builder.Services.AddScoped<FixtureItemService>();
+builder.Services.AddScoped<ContractorService>();
+builder.Services.AddScoped<JobService>();
 
 var app = builder.Build();
 

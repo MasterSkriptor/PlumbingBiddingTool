@@ -1,0 +1,128 @@
+@page "/contractors"
+@using PlumbingBiddingTool.Application.Contractors
+@using PlumbingBiddingTool.Domain.Entities
+@inject ContractorService ContractorService
+@rendermode InteractiveServer
+
+<PageTitle>Contractors</PageTitle>
+
+<h1>Contractors</h1>
+
+<button class="btn btn-primary mb-3" @onclick="ShowAddForm">Add New Contractor</button>
+
+@if (showForm)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">@(editingContractor?.Id > 0 ? "Edit" : "Add") Contractor</h5>
+            <EditForm Model="editingContractor" OnValidSubmit="SaveContractor">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="editingContractor!.Name" />
+                </div>
+
+                <div>
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (contractors == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (contractors.Count == 0)
+{
+    <p><em>No contractors found. Click "Add New Contractor" to create one.</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Number of Jobs</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contractor in contractors)
+            {
+                <tr>
+                    <td>@contractor.Id</td>
+                    <td>@contractor.Name</td>
+                    <td>@contractor.Jobs.Count</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" @onclick="() => EditContractor(contractor)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteContractor(contractor.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Contractor> contractors = new();
+    private Contractor? editingContractor;
+    private bool showForm = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        contractors = (await ContractorService.GetAllContractorsAsync()).ToList();
+    }
+
+    private void ShowAddForm()
+    {
+        editingContractor = new Contractor();
+        showForm = true;
+    }
+
+    private void EditContractor(Contractor contractor)
+    {
+        editingContractor = new Contractor
+        {
+            Id = contractor.Id,
+            Name = contractor.Name
+        };
+        showForm = true;
+    }
+
+    private async Task SaveContractor()
+    {
+        if (editingContractor == null) return;
+
+        if (editingContractor.Id == 0)
+        {
+            await ContractorService.CreateContractorAsync(editingContractor.Name);
+        }
+        else
+        {
+            await ContractorService.UpdateContractorAsync(editingContractor.Id, editingContractor.Name);
+        }
+
+        await LoadData();
+        CancelEdit();
+    }
+
+    private async Task DeleteContractor(int id)
+    {
+        await ContractorService.DeleteContractorAsync(id);
+        await LoadData();
+    }
+
+    private void CancelEdit()
+    {
+        editingContractor = null;
+        showForm = false;
+    }
+}

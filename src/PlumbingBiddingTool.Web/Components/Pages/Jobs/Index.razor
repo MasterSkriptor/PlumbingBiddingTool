@@ -1,0 +1,139 @@
+@page "/jobs"
+@using PlumbingBiddingTool.Application.Jobs
+@using PlumbingBiddingTool.Application.Contractors
+@using PlumbingBiddingTool.Domain.Entities
+@inject JobService JobService
+@inject ContractorService ContractorService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Jobs</PageTitle>
+
+<h1>Jobs</h1>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <label class="form-label">Filter by Contractor</label>
+        <select class="form-select" @onchange="OnContractorFilterChanged">
+            <option value="0">All Contractors</option>
+            @foreach (var contractor in contractors)
+            {
+                <option value="@contractor.Id">@contractor.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-8 d-flex align-items-end">
+        <button class="btn btn-primary" @onclick="CreateNewJob">Create New Job</button>
+    </div>
+</div>
+
+@if (jobs == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (jobs.Count == 0)
+{
+    <p><em>No jobs found. Click "Create New Job" to create one.</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Job Name</th>
+                <th>Contractor</th>
+                <th>Status</th>
+                <th>Total Cost</th>
+                <th>Fixture Items</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var job in jobs)
+            {
+                <tr>
+                    <td>@job.Id</td>
+                    <td>@job.JobName</td>
+                    <td>@job.Contractor.Name</td>
+                    <td>
+                        <span class="badge @GetStatusBadgeClass(job.Status)">
+                            @job.Status
+                        </span>
+                    </td>
+                    <td>$@job.TotalCost.ToString("F2")</td>
+                    <td>@job.JobFixtureItems.Count item(s)</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" @onclick="() => EditJob(job.Id)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteJob(job.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Job> jobs = new();
+    private List<Contractor> contractors = new();
+    private int selectedContractorId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        contractors = (await ContractorService.GetAllContractorsAsync()).ToList();
+        await LoadJobs();
+    }
+
+    private async Task LoadJobs()
+    {
+        if (selectedContractorId == 0)
+        {
+            jobs = (await JobService.GetAllJobsAsync()).ToList();
+        }
+        else
+        {
+            jobs = (await JobService.GetJobsByContractorAsync(selectedContractorId)).ToList();
+        }
+    }
+
+    private async Task OnContractorFilterChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var contractorId))
+        {
+            selectedContractorId = contractorId;
+            await LoadJobs();
+        }
+    }
+
+    private void CreateNewJob()
+    {
+        NavigationManager.NavigateTo("/jobs/create");
+    }
+
+    private void EditJob(int jobId)
+    {
+        NavigationManager.NavigateTo($"/jobs/edit/{jobId}");
+    }
+
+    private async Task DeleteJob(int id)
+    {
+        await JobService.DeleteJobAsync(id);
+        await LoadJobs();
+    }
+
+    private string GetStatusBadgeClass(JobStatus status)
+    {
+        return status switch
+        {
+            JobStatus.Open => "bg-primary",
+            JobStatus.Accepted => "bg-success",
+            JobStatus.Closed => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}

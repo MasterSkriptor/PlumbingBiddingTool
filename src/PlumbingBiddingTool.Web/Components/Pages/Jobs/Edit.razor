@@ -1,0 +1,185 @@
+@page "/jobs/edit/{JobId:int}"
+@using PlumbingBiddingTool.Application.Jobs
+@using PlumbingBiddingTool.Application.Contractors
+@using PlumbingBiddingTool.Domain.Entities
+@inject JobService JobService
+@inject ContractorService ContractorService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Edit Job</PageTitle>
+
+<h1>Edit Job</h1>
+
+@if (job == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <EditForm Model="job" OnValidSubmit="UpdateJob">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Contractor</label>
+                        <input type="text" class="form-control" value="@job.Contractor.Name" disabled />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Job Name</label>
+                        <InputText class="form-control" @bind-Value="jobName" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Status</label>
+                        <InputSelect class="form-select" @bind-Value="jobStatus">
+                            @foreach (JobStatus status in Enum.GetValues(typeof(JobStatus)))
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <h5 class="mb-3">Fixture Items</h5>
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Fixture Name</th>
+                                <th>Price (Snapshot)</th>
+                                <th style="width: 150px;">Quantity</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fixtureData in fixtureList)
+                            {
+                                var quantity = fixtureQuantities.GetValueOrDefault(fixtureData.FixtureId, 0);
+                                var price = fixtureData.Price;
+                                <tr>
+                                    <td>
+                                        @fixtureData.Name
+                                        @if (fixtureData.IsExisting)
+                                        {
+                                            <span class="badge bg-info ms-2">In Job</span>
+                                        }
+                                    </td>
+                                    <td>$@price.ToString("F2")</td>
+                                    <td>
+                                        <input type="number" 
+                                               class="form-control form-control-sm" 
+                                               min="0" 
+                                               value="@quantity"
+                                               @onchange="@(e => UpdateQuantity(fixtureData.FixtureId, e.Value))" />
+                                    </td>
+                                    <td>$@((price * quantity).ToString("F2"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <strong>Total Cost: $@CalculateTotalCost().ToString("F2")</strong>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int JobId { get; set; }
+
+    private Job? job;
+    private string jobName = string.Empty;
+    private JobStatus jobStatus;
+    private List<FixtureData> fixtureList = new();
+    private Dictionary<int, int> fixtureQuantities = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        job = await JobService.GetJobByIdAsync(JobId);
+        
+        if (job != null)
+        {
+            jobName = job.JobName;
+            jobStatus = job.Status;
+
+            // Get all available fixtures
+            var allFixtures = (await JobService.GetAvailableFixturesAsync()).ToList();
+            
+            // Build fixture list with existing JobFixtureItems having their snapshot prices
+            foreach (var fixture in allFixtures)
+            {
+                var existingJobFixture = job.JobFixtureItems.FirstOrDefault(jfi => jfi.FixtureItemId == fixture.Id);
+                
+                if (existingJobFixture != null)
+                {
+                    // Existing item - use snapshot price and current quantity
+                    fixtureList.Add(new FixtureData
+                    {
+                        FixtureId = fixture.Id,
+                        Name = fixture.Name,
+                        Price = existingJobFixture.Price, // Historical price
+                        IsExisting = true
+                    });
+                    fixtureQuantities[fixture.Id] = existingJobFixture.Quantity;
+                }
+                else
+                {
+                    // New item - use current fixture price and quantity 0
+                    fixtureList.Add(new FixtureData
+                    {
+                        FixtureId = fixture.Id,
+                        Name = fixture.Name,
+                        Price = fixture.Price, // Current price
+                        IsExisting = false
+                    });
+                    fixtureQuantities[fixture.Id] = 0;
+                }
+            }
+        }
+    }
+
+    private void UpdateQuantity(int fixtureId, object? value)
+    {
+        if (int.TryParse(value?.ToString(), out var quantity))
+        {
+            fixtureQuantities[fixtureId] = Math.Max(0, quantity);
+        }
+    }
+
+    private decimal CalculateTotalCost()
+    {
+        return fixtureList
+            .Where(f => fixtureQuantities.ContainsKey(f.FixtureId))
+            .Sum(f => f.Price * fixtureQuantities[f.FixtureId]);
+    }
+
+    private async Task UpdateJob()
+    {
+        if (job == null) return;
+
+        await JobService.UpdateJobAsync(JobId, jobName, jobStatus, fixtureQuantities);
+        NavigationManager.NavigateTo("/jobs");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/jobs");
+    }
+
+    private class FixtureData
+    {
+        public int FixtureId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public bool IsExisting { get; set; }
+    }
+}

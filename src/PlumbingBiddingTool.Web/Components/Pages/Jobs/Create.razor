@@ -1,0 +1,134 @@
+@page "/jobs/create"
+@using PlumbingBiddingTool.Application.Jobs
+@using PlumbingBiddingTool.Application.Contractors
+@using PlumbingBiddingTool.Domain.Entities
+@inject JobService JobService
+@inject ContractorService ContractorService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Create Job</PageTitle>
+
+<h1>Create New Job</h1>
+
+<div class="card">
+    <div class="card-body">
+        <EditForm Model="jobModel" OnValidSubmit="CreateJob">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Contractor</label>
+                    <select class="form-select" @bind="jobModel.ContractorId">
+                        <option value="0">-- Select Contractor --</option>
+                        @foreach (var contractor in contractors)
+                        {
+                            <option value="@contractor.Id">@contractor.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Job Name</label>
+                    <InputText class="form-control" @bind-Value="jobModel.JobName" />
+                </div>
+            </div>
+
+            <h5 class="mb-3">Fixture Items</h5>
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>Fixture Name</th>
+                            <th>Price</th>
+                            <th style="width: 150px;">Quantity</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fixture in availableFixtures)
+                        {
+                            var quantity = fixtureQuantities.GetValueOrDefault(fixture.Id, 0);
+                            <tr>
+                                <td>@fixture.Name</td>
+                                <td>$@fixture.Price.ToString("F2")</td>
+                                <td>
+                                    <input type="number" 
+                                           class="form-control form-control-sm" 
+                                           min="0" 
+                                           value="@quantity"
+                                           @onchange="@(e => UpdateQuantity(fixture.Id, e.Value))" />
+                                </td>
+                                <td>$@((fixture.Price * quantity).ToString("F2"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <strong>Total Cost: $@CalculateTotalCost().ToString("F2")</strong>
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success" disabled="@(!IsValid())">Create Job</button>
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private JobModel jobModel = new();
+    private List<Contractor> contractors = new();
+    private List<FixtureItem> availableFixtures = new();
+    private Dictionary<int, int> fixtureQuantities = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        contractors = (await ContractorService.GetAllContractorsAsync()).ToList();
+        availableFixtures = (await JobService.GetAvailableFixturesAsync()).ToList();
+        
+        // Initialize all fixtures with quantity 0
+        foreach (var fixture in availableFixtures)
+        {
+            fixtureQuantities[fixture.Id] = 0;
+        }
+    }
+
+    private void UpdateQuantity(int fixtureId, object? value)
+    {
+        if (int.TryParse(value?.ToString(), out var quantity))
+        {
+            fixtureQuantities[fixtureId] = Math.Max(0, quantity);
+        }
+    }
+
+    private decimal CalculateTotalCost()
+    {
+        return availableFixtures
+            .Where(f => fixtureQuantities.ContainsKey(f.Id))
+            .Sum(f => f.Price * fixtureQuantities[f.Id]);
+    }
+
+    private bool IsValid()
+    {
+        return jobModel.ContractorId > 0 && !string.IsNullOrWhiteSpace(jobModel.JobName);
+    }
+
+    private async Task CreateJob()
+    {
+        if (!IsValid()) return;
+
+        await JobService.CreateJobAsync(jobModel.ContractorId, jobModel.JobName, fixtureQuantities);
+        NavigationManager.NavigateTo("/jobs");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/jobs");
+    }
+
+    private class JobModel
+    {
+        public int ContractorId { get; set; }
+        public string JobName { get; set; } = string.Empty;
+    }
+}
