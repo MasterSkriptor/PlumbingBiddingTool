@@ -11,6 +11,16 @@
 
 <h1>Create New Job</h1>
 
+@if (isLoading)
+{
+    <div class="loading-overlay">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2 text-light">Preparing job form...</div>
+    </div>
+}
+
 <div class="card">
     <div class="card-body">
         <EditForm Model="jobModel" OnValidSubmit="CreateJob">
@@ -83,6 +93,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         contractors = (await ContractorService.GetAllContractorsAsync()).ToList();
         availableFixtures = (await JobService.GetAvailableFixturesAsync()).ToList();
         
@@ -91,6 +102,7 @@
         {
             fixtureQuantities[fixture.Id] = 0;
         }
+        isLoading = false;
     }
 
     private void UpdateQuantity(int fixtureId, object? value)
@@ -117,7 +129,9 @@
     {
         if (!IsValid()) return;
 
+        isLoading = true;
         await JobService.CreateJobAsync(jobModel.ContractorId, jobModel.JobName, fixtureQuantities);
+        isLoading = false;
         NavigationManager.NavigateTo("/jobs");
     }
 
@@ -131,4 +145,6 @@
         public int ContractorId { get; set; }
         public string JobName { get; set; } = string.Empty;
     }
+
+    private bool isLoading = false;
 }
