@@ -1,3 +1,5 @@
+using System.IO;
+using Microsoft.Data.Sqlite;
 using PlumbingBiddingTool.Web.Components;
 using Microsoft.EntityFrameworkCore;
 using PlumbingBiddingTool.Application.BidItems;
@@ -14,16 +16,25 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Configure Database
+// Configure Database: place SQLite DB in the Infrastructure project folder
+var dbPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "PlumbingBiddingTool.Infrastructure", "plumbingbidding.db"));
+var baseConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? $"Data Source={dbPath}";
+var sqliteBuilder = new SqliteConnectionStringBuilder(baseConnection);
+if (!Path.IsPathRooted(sqliteBuilder.DataSource))
+{
+    sqliteBuilder.DataSource = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, sqliteBuilder.DataSource));
+}
+var connectionString = sqliteBuilder.ToString();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? "Data Source=plumbingbidding.db"));
+    options.UseSqlite(connectionString));
 
 // Register repositories
 builder.Services.AddScoped<IBidItemRepository, BidItemRepository>();
 builder.Services.AddScoped<IFixtureItemRepository, FixtureItemRepository>();
 builder.Services.AddScoped<IContractorRepository, ContractorRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
+builder.Services.AddScoped<IJobOptionRepository, JobOptionRepository>();
 
 // Register application services
 builder.Services.AddScoped<BidItemService>();

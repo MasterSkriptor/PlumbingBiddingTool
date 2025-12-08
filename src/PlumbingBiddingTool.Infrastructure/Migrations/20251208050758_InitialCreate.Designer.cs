@@ -10,8 +10,8 @@ using PlumbingBiddingTool.Infrastructure.Data;
 namespace PlumbingBiddingTool.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251203022821_AddContractorsAndJobs")]
-    partial class AddContractorsAndJobs
+    [Migration("20251208050758_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -44,6 +44,9 @@ namespace PlumbingBiddingTool.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Phase")
+                        .HasColumnType("INTEGER");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
@@ -138,6 +141,34 @@ namespace PlumbingBiddingTool.Infrastructure.Migrations
                     b.ToTable("JobFixtureItems");
                 });
 
+            modelBuilder.Entity("PlumbingBiddingTool.Domain.Entities.JobOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("JobId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobId");
+
+                    b.ToTable("JobOptions");
+                });
+
             modelBuilder.Entity("BidItemFixtureItem", b =>
                 {
                     b.HasOne("PlumbingBiddingTool.Domain.Entities.BidItem", null)
@@ -183,6 +214,17 @@ namespace PlumbingBiddingTool.Infrastructure.Migrations
                     b.Navigation("Job");
                 });
 
+            modelBuilder.Entity("PlumbingBiddingTool.Domain.Entities.JobOption", b =>
+                {
+                    b.HasOne("PlumbingBiddingTool.Domain.Entities.Job", "Job")
+                        .WithMany("JobOptions")
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Job");
+                });
+
             modelBuilder.Entity("PlumbingBiddingTool.Domain.Entities.Contractor", b =>
                 {
                     b.Navigation("Jobs");
@@ -191,6 +233,8 @@ namespace PlumbingBiddingTool.Infrastructure.Migrations
             modelBuilder.Entity("PlumbingBiddingTool.Domain.Entities.Job", b =>
                 {
                     b.Navigation("JobFixtureItems");
+
+                    b.Navigation("JobOptions");
                 });
 #pragma warning restore 612, 618
         }

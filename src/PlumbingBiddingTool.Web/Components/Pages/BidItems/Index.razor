@@ -31,6 +31,15 @@
                     <InputNumber class="form-control" @bind-Value="formModel.Price" />
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label">Phase:</label>
+                    <InputSelect class="form-select" @bind-Value="formModel.Phase">
+                        <option value="@Phase.Underground">Underground</option>
+                        <option value="@Phase.StackOut">Stack Out</option>
+                        <option value="@Phase.Trim">Trim</option>
+                    </InputSelect>
+                </div>
+
                 <button type="submit" class="btn btn-success">@(editingItem == null ? "Add" : "Update")</button>
                 <button type="button" class="btn btn-secondary" @onclick="CancelForm">Cancel</button>
             </EditForm>
@@ -53,6 +62,7 @@ else
             <tr>
                 <th>Name</th>
                 <th>Price</th>
+                <th>Phase</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -62,6 +72,7 @@ else
                 <tr>
                     <td>@item.Name</td>
                     <td>@item.Price.ToString("C")</td>
+                    <td>@GetPhaseDisplayName(item.Phase)</td>
                     <td>
                         <button class="btn btn-sm btn-warning" @onclick="() => EditItem(item)">Edit</button>
                         <button class="btn btn-sm btn-danger" @onclick="() => DeleteItem(item.Id)">Delete</button>
@@ -99,7 +110,7 @@ else
     private void EditItem(BidItem item)
     {
         editingItem = item;
-        formModel = new BidItemFormModel { Name = item.Name, Price = item.Price };
+        formModel = new BidItemFormModel { Name = item.Name, Price = item.Price, Phase = item.Phase };
         showForm = true;
     }
 
@@ -114,11 +125,11 @@ else
     {
         if (editingItem == null)
         {
-            await BidItemService.CreateBidItemAsync(formModel.Name, formModel.Price);
+            await BidItemService.CreateBidItemAsync(formModel.Name, formModel.Price, formModel.Phase);
         }
         else
         {
-            await BidItemService.UpdateBidItemAsync(editingItem.Id, formModel.Name, formModel.Price);
+            await BidItemService.UpdateBidItemAsync(editingItem.Id, formModel.Name, formModel.Price, formModel.Phase);
         }
 
         await LoadBidItems();
@@ -131,9 +142,21 @@ else
         await LoadBidItems();
     }
 
+    private string GetPhaseDisplayName(Phase phase)
+    {
+        return phase switch
+        {
+            Phase.Underground => "Underground",
+            Phase.StackOut => "Stack Out",
+            Phase.Trim => "Trim",
+            _ => phase.ToString()
+        };
+    }
+
     private class BidItemFormModel
     {
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
+        public Phase Phase { get; set; } = Phase.Underground;
     }
 }

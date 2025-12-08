@@ -11,5 +11,8 @@ public class Job
     
     public ICollection<JobFixtureItem> JobFixtureItems { get; set; } = new List<JobFixtureItem>();
     
-    public decimal TotalCost => JobFixtureItems?.Sum(jfi => jfi.Price * jfi.Quantity) ?? 0;
+    public ICollection<JobOption> JobOptions { get; set; } = new List<JobOption>();
+    
+    public decimal TotalCost => (JobFixtureItems?.Sum(jfi => jfi.Price * jfi.Quantity) ?? 0) + 
+                                (JobOptions?.Sum(jo => jo.Price * jo.Quantity) ?? 0);
 }

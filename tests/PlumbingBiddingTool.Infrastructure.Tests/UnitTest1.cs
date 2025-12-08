@@ -36,9 +36,9 @@ public class BidItemRepositoryTests : IDisposable
     {
         // Arrange
         _context.BidItems.AddRange(
-            new BidItem { Id = 1, Name = "Item 1", Price = 10.00m },
-            new BidItem { Id = 2, Name = "Item 2", Price = 20.00m },
-            new BidItem { Id = 3, Name = "Item 3", Price = 30.00m }
+            new BidItem { Id = 1, Name = "Item 1", Price = 10.00m, Phase = Phase.Underground },
+            new BidItem { Id = 2, Name = "Item 2", Price = 20.00m, Phase = Phase.StackOut },
+            new BidItem { Id = 3, Name = "Item 3", Price = 30.00m, Phase = Phase.Trim }
         );
         await _context.SaveChangesAsync();
 
@@ -53,7 +53,7 @@ public class BidItemRepositoryTests : IDisposable
     public async Task GetByIdAsync_ShouldReturnItem_WhenExists()
     {
         // Arrange
-        var item = new BidItem { Id = 1, Name = "Test Item", Price = 15.50m };
+        var item = new BidItem { Id = 1, Name = "Test Item", Price = 15.50m, Phase = Phase.Trim };
         _context.BidItems.Add(item);
         await _context.SaveChangesAsync();
 
@@ -65,6 +65,7 @@ public class BidItemRepositoryTests : IDisposable
         Assert.Equal(1, result.Id);
         Assert.Equal("Test Item", result.Name);
         Assert.Equal(15.50m, result.Price);
+        Assert.Equal(Phase.Trim, result.Phase);
     }
 
     [Fact]
@@ -81,7 +82,7 @@ public class BidItemRepositoryTests : IDisposable
     public async Task AddAsync_ShouldAddNewItem()
     {
         // Arrange
-        var newItem = new BidItem { Name = "New Item", Price = 25.99m };
+        var newItem = new BidItem { Name = "New Item", Price = 25.99m, Phase = Phase.StackOut };
 
         // Act
         var result = await _repository.AddAsync(newItem);
@@ -91,18 +92,20 @@ public class BidItemRepositoryTests : IDisposable
         Assert.NotEqual(0, result.Id);
         Assert.Equal("New Item", result.Name);
         Assert.Equal(25.99m, result.Price);
+        Assert.Equal(Phase.StackOut, result.Phase);
         
         // Verify it's in the database
         var dbItem = await _context.BidItems.FindAsync(result.Id);
         Assert.NotNull(dbItem);
         Assert.Equal("New Item", dbItem.Name);
+        Assert.Equal(Phase.StackOut, dbItem.Phase);
     }
 
     [Fact]
     public async Task AddAsync_ShouldPersistToDatabase()
     {
         // Arrange
-        var item = new BidItem { Name = "Persistent Item", Price = 100.00m };
+        var item = new BidItem { Name = "Persistent Item", Price = 100.00m, Phase = Phase.Underground };
 
         // Act
         await _repository.AddAsync(item);
@@ -116,13 +119,14 @@ public class BidItemRepositoryTests : IDisposable
     public async Task UpdateAsync_ShouldModifyExistingItem()
     {
         // Arrange
-        var item = new BidItem { Id = 1, Name = "Original", Price = 10.00m };
+        var item = new BidItem { Id = 1, Name = "Original", Price = 10.00m, Phase = Phase.Underground };
         _context.BidItems.Add(item);
         await _context.SaveChangesAsync();
 
         // Act
         item.Name = "Updated";
         item.Price = 20.00m;
+        item.Phase = Phase.Trim;
         await _repository.UpdateAsync(item);
 
         // Assert
@@ -130,13 +134,14 @@ public class BidItemRepositoryTests : IDisposable
         Assert.NotNull(updatedItem);
         Assert.Equal("Updated", updatedItem.Name);
         Assert.Equal(20.00m, updatedItem.Price);
+        Assert.Equal(Phase.Trim, updatedItem.Phase);
     }
 
     [Fact]
     public async Task UpdateAsync_ShouldPersistChanges()
     {
         // Arrange
-        var item = new BidItem { Id = 1, Name = "Before", Price = 5.00m };
+        var item = new BidItem { Id = 1, Name = "Before", Price = 5.00m, Phase = Phase.StackOut };
         _context.BidItems.Add(item);
         await _context.SaveChangesAsync();
         
@@ -144,20 +149,21 @@ public class BidItemRepositoryTests : IDisposable
         _context.Entry(item).State = EntityState.Detached;
 
         // Act
-        var modifiedItem = new BidItem { Id = 1, Name = "After", Price = 15.00m };
+        var modifiedItem = new BidItem { Id = 1, Name = "After", Price = 15.00m, Phase = Phase.Trim };
         await _repository.UpdateAsync(modifiedItem);
 
         // Assert
         var result = await _context.BidItems.FindAsync(1);
         Assert.Equal("After", result!.Name);
         Assert.Equal(15.00m, result.Price);
+        Assert.Equal(Phase.Trim, result.Phase);
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldRemoveItem_WhenExists()
     {
         // Arrange
-        var item = new BidItem { Id = 1, Name = "To Delete", Price = 5.00m };
+        var item = new BidItem { Id = 1, Name = "To Delete", Price = 5.00m, Phase = Phase.Underground };
         _context.BidItems.Add(item);
         await _context.SaveChangesAsync();
 
@@ -174,7 +180,7 @@ public class BidItemRepositoryTests : IDisposable
     public async Task DeleteAsync_ShouldDoNothing_WhenItemNotExists()
     {
         // Arrange
-        _context.BidItems.Add(new BidItem { Id = 1, Name = "Item", Price = 10.00m });
+        _context.BidItems.Add(new BidItem { Id = 1, Name = "Item", Price = 10.00m, Phase = Phase.Trim });
         await _context.SaveChangesAsync();
 
         // Act
@@ -191,7 +197,7 @@ public class BidItemRepositoryTests : IDisposable
     public async Task AddAsync_ShouldHandleVariousInputs(string name, decimal price)
     {
         // Arrange
-        var item = new BidItem { Name = name, Price = price };
+        var item = new BidItem { Name = name, Price = price, Phase = Phase.StackOut };
 
         // Act
         var result = await _repository.AddAsync(item);
@@ -199,14 +205,15 @@ public class BidItemRepositoryTests : IDisposable
         // Assert
         Assert.Equal(name, result.Name);
         Assert.Equal(price, result.Price);
+        Assert.Equal(Phase.StackOut, result.Phase);
     }
 
     [Fact]
     public async Task Repository_ShouldHandleMultipleOperations()
     {
         // Arrange & Act
-        var item1 = await _repository.AddAsync(new BidItem { Name = "Item 1", Price = 10m });
-        var item2 = await _repository.AddAsync(new BidItem { Name = "Item 2", Price = 20m });
+        var item1 = await _repository.AddAsync(new BidItem { Name = "Item 1", Price = 10m, Phase = Phase.Underground });
+        var item2 = await _repository.AddAsync(new BidItem { Name = "Item 2", Price = 20m, Phase = Phase.StackOut });
         
         item1.Name = "Modified Item 1";
         await _repository.UpdateAsync(item1);

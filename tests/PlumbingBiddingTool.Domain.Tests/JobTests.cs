@@ -156,4 +156,84 @@ public class JobTests
         // Assert
         Assert.Equal(JobStatus.Accepted, job.Status);
     }
+
+    [Fact]
+    public void Job_TotalCost_IncludesJobOptions()
+    {
+        // Arrange
+        var job = new Job
+        {
+            JobName = "Test Job",
+            ContractorId = 1
+        };
+        job.JobFixtureItems.Add(new JobFixtureItem { Price = 50.00m, Quantity = 2 });
+        job.JobOptions.Add(new JobOption { Name = "Option 1", Price = 100.00m, Quantity = 1 });
+
+        // Act
+        var totalCost = job.TotalCost;
+
+        // Assert
+        Assert.Equal(200.00m, totalCost); // (50*2) + (100*1)
+    }
+
+    [Fact]
+    public void Job_TotalCost_CalculatesCorrectly_WithMultipleJobOptions()
+    {
+        // Arrange
+        var job = new Job
+        {
+            JobName = "Test Job",
+            ContractorId = 1
+        };
+        job.JobFixtureItems.Add(new JobFixtureItem { Price = 50.00m, Quantity = 2 });
+        job.JobOptions.Add(new JobOption { Name = "Option 1", Price = 100.00m, Quantity = 1 });
+        job.JobOptions.Add(new JobOption { Name = "Option 2", Price = 75.00m, Quantity = 3 });
+
+        // Act
+        var totalCost = job.TotalCost;
+
+        // Assert
+        Assert.Equal(425.00m, totalCost); // (50*2) + (100*1) + (75*3)
+    }
+
+    [Fact]
+    public void Job_TotalCost_WithOnlyJobOptions()
+    {
+        // Arrange
+        var job = new Job
+        {
+            JobName = "Test Job",
+            ContractorId = 1
+        };
+        job.JobOptions.Add(new JobOption { Name = "Option 1", Price = 200.00m, Quantity = 2 });
+
+        // Act
+        var totalCost = job.TotalCost;
+
+        // Assert
+        Assert.Equal(400.00m, totalCost);
+    }
+
+    [Fact]
+    public void Job_TotalCost_UpdatesDynamically_WhenJobOptionsChange()
+    {
+        // Arrange
+        var job = new Job
+        {
+            JobName = "Test Job",
+            ContractorId = 1
+        };
+        var option = new JobOption { Name = "Option 1", Price = 50.00m, Quantity = 2 };
+        job.JobOptions.Add(option);
+
+        var initialCost = job.TotalCost;
+
+        // Act
+        option.Quantity = 5;
+        var updatedCost = job.TotalCost;
+
+        // Assert
+        Assert.Equal(100.00m, initialCost);
+        Assert.Equal(250.00m, updatedCost);
+    }
 }

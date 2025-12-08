@@ -55,8 +55,8 @@ public class FixtureItemRepositoryTests : IDisposable
     public async Task GetAllAsync_ShouldIncludeBidItems()
     {
         // Arrange
-        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 10.00m };
-        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 20.00m };
+        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 10.00m, Phase = Phase.Underground };
+        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 20.00m, Phase = Phase.StackOut };
         _context.BidItems.AddRange(bidItem1, bidItem2);
 
         var fixture = new FixtureItem 
@@ -107,7 +107,7 @@ public class FixtureItemRepositoryTests : IDisposable
     public async Task GetByIdAsync_ShouldIncludeBidItems()
     {
         // Arrange
-        var bidItem = new BidItem { Id = 1, Name = "Bid Item", Price = 50.00m };
+        var bidItem = new BidItem { Id = 1, Name = "Bid Item", Price = 50.00m, Phase = Phase.Trim };
         _context.BidItems.Add(bidItem);
 
         var fixture = new FixtureItem 
@@ -150,8 +150,8 @@ public class FixtureItemRepositoryTests : IDisposable
     public async Task AddAsync_ShouldAddFixtureWithBidItems()
     {
         // Arrange
-        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 10.00m };
-        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 20.00m };
+        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 10.00m, Phase = Phase.Underground };
+        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 20.00m, Phase = Phase.StackOut };
         _context.BidItems.AddRange(bidItem1, bidItem2);
         await _context.SaveChangesAsync();
 
@@ -196,8 +196,8 @@ public class FixtureItemRepositoryTests : IDisposable
     public async Task UpdateAsync_ShouldUpdateBidItems()
     {
         // Arrange
-        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 10.00m };
-        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 20.00m };
+        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 10.00m, Phase = Phase.Underground };
+        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 20.00m, Phase = Phase.Trim };
         _context.BidItems.AddRange(bidItem1, bidItem2);
 
         var fixture = new FixtureItem 
@@ -259,7 +259,7 @@ public class FixtureItemRepositoryTests : IDisposable
     public async Task DeleteAsync_ShouldNotDeleteRelatedBidItems()
     {
         // Arrange
-        var bidItem = new BidItem { Id = 1, Name = "Bid Item", Price = 10.00m };
+        var bidItem = new BidItem { Id = 1, Name = "Bid Item", Price = 10.00m, Phase = Phase.Underground };
         _context.BidItems.Add(bidItem);
 
         var fixture = new FixtureItem 
@@ -286,9 +286,9 @@ public class FixtureItemRepositoryTests : IDisposable
     public async Task Repository_ShouldHandleComplexScenario()
     {
         // Arrange
-        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 100.00m };
-        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 200.00m };
-        var bidItem3 = new BidItem { Id = 3, Name = "Bid 3", Price = 300.00m };
+        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 100.00m, Phase = Phase.Underground };
+        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 200.00m, Phase = Phase.StackOut };
+        var bidItem3 = new BidItem { Id = 3, Name = "Bid 3", Price = 300.00m, Phase = Phase.Trim };
         _context.BidItems.AddRange(bidItem1, bidItem2, bidItem3);
         await _context.SaveChangesAsync();
 
@@ -332,8 +332,8 @@ public class FixtureItemRepositoryTests : IDisposable
     public async Task Repository_ShouldCalculatePriceCorrectly()
     {
         // Arrange
-        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 25.50m };
-        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 74.50m };
+        var bidItem1 = new BidItem { Id = 1, Name = "Bid 1", Price = 25.50m, Phase = Phase.Underground };
+        var bidItem2 = new BidItem { Id = 2, Name = "Bid 2", Price = 74.50m, Phase = Phase.StackOut };
         _context.BidItems.AddRange(bidItem1, bidItem2);
 
         var fixture = new FixtureItem 

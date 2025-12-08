@@ -22,7 +22,7 @@ public class FixtureItemTests
     {
         // Arrange
         var fixtureItem = new FixtureItem();
-        var bidItem = new BidItem { Id = 1, Name = "Test Bid", Price = 50.00m };
+        var bidItem = new BidItem { Id = 1, Name = "Test Bid", Price = 50.00m, Phase = Phase.Underground };
 
         // Act
         fixtureItem.Id = 1;
@@ -45,9 +45,9 @@ public class FixtureItemTests
             Name = "Bathroom Fixture",
             BidItems = new List<BidItem>
             {
-                new BidItem { Id = 1, Name = "Sink", Price = 150.00m },
-                new BidItem { Id = 2, Name = "Faucet", Price = 75.50m },
-                new BidItem { Id = 3, Name = "Drain", Price = 25.25m }
+                new BidItem { Id = 1, Name = "Sink", Price = 150.00m, Phase = Phase.Underground },
+                new BidItem { Id = 2, Name = "Faucet", Price = 75.50m, Phase = Phase.StackOut },
+                new BidItem { Id = 3, Name = "Drain", Price = 25.25m, Phase = Phase.Trim }
             }
         };
 
@@ -83,14 +83,14 @@ public class FixtureItemTests
             Name = "Dynamic Fixture",
             BidItems = new List<BidItem>
             {
-                new BidItem { Id = 1, Name = "Item 1", Price = 100.00m }
+                new BidItem { Id = 1, Name = "Item 1", Price = 100.00m, Phase = Phase.Underground }
             }
         };
 
         var initialPrice = fixtureItem.Price;
 
         // Act
-        fixtureItem.BidItems.Add(new BidItem { Id = 2, Name = "Item 2", Price = 50.00m });
+        fixtureItem.BidItems.Add(new BidItem { Id = 2, Name = "Item 2", Price = 50.00m, Phase = Phase.StackOut });
         var updatedPrice = fixtureItem.Price;
 
         // Assert
@@ -123,11 +123,11 @@ public class FixtureItemTests
             Name = "Complex Fixture",
             BidItems = new List<BidItem>
             {
-                new BidItem { Id = 1, Name = "Item 1", Price = 10.00m },
-                new BidItem { Id = 2, Name = "Item 2", Price = 20.00m },
-                new BidItem { Id = 3, Name = "Item 3", Price = 30.00m },
-                new BidItem { Id = 4, Name = "Item 4", Price = 40.00m },
-                new BidItem { Id = 5, Name = "Item 5", Price = 50.00m }
+                new BidItem { Id = 1, Name = "Item 1", Price = 10.00m, Phase = Phase.Underground },
+                new BidItem { Id = 2, Name = "Item 2", Price = 20.00m, Phase = Phase.StackOut },
+                new BidItem { Id = 3, Name = "Item 3", Price = 30.00m, Phase = Phase.Trim },
+                new BidItem { Id = 4, Name = "Item 4", Price = 40.00m, Phase = Phase.Underground },
+                new BidItem { Id = 5, Name = "Item 5", Price = 50.00m, Phase = Phase.StackOut }
             }
         };
 
@@ -144,9 +144,9 @@ public class FixtureItemTests
         {
             BidItems = new List<BidItem>
             {
-                new BidItem { Price = 10.99m },
-                new BidItem { Price = 20.01m },
-                new BidItem { Price = 5.555m }
+                new BidItem { Price = 10.99m, Phase = Phase.Underground },
+                new BidItem { Price = 20.01m, Phase = Phase.StackOut },
+                new BidItem { Price = 5.555m, Phase = Phase.Trim }
             }
         };
 

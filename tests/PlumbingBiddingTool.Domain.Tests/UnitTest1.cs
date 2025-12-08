@@ -14,6 +14,7 @@ public class BidItemTests
         Assert.Equal(0, bidItem.Id);
         Assert.Equal(string.Empty, bidItem.Name);
         Assert.Equal(0, bidItem.Price);
+        Assert.Equal(Phase.Underground, bidItem.Phase);
     }
 
     [Fact]
@@ -26,11 +27,13 @@ public class BidItemTests
         bidItem.Id = 1;
         bidItem.Name = "Test Item";
         bidItem.Price = 99.99m;
+        bidItem.Phase = Phase.StackOut;
 
         // Assert
         Assert.Equal(1, bidItem.Id);
         Assert.Equal("Test Item", bidItem.Name);
         Assert.Equal(99.99m, bidItem.Price);
+        Assert.Equal(Phase.StackOut, bidItem.Phase);
     }
 
     [Theory]
@@ -62,5 +65,37 @@ public class BidItemTests
 
         // Assert
         Assert.Equal(123.456789m, bidItem.Price);
+    }
+
+    [Theory]
+    [InlineData(Phase.Underground)]
+    [InlineData(Phase.StackOut)]
+    [InlineData(Phase.Trim)]
+    public void BidItem_ShouldStoreAllPhaseValues(Phase phase)
+    {
+        // Arrange & Act
+        var bidItem = new BidItem
+        {
+            Name = "Test Item",
+            Price = 50.00m,
+            Phase = phase
+        };
+
+        // Assert
+        Assert.Equal(phase, bidItem.Phase);
+    }
+
+    [Fact]
+    public void BidItem_DefaultPhase_ShouldBeUnderground()
+    {
+        // Arrange & Act
+        var bidItem = new BidItem
+        {
+            Name = "Test Item",
+            Price = 50.00m
+        };
+
+        // Assert
+        Assert.Equal(Phase.Underground, bidItem.Phase);
     }
 }

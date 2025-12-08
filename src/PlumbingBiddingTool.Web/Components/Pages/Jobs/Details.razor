@@ -1,0 +1,271 @@
+@page "/jobs/details/{JobId:int}"
+@using PlumbingBiddingTool.Application.Jobs
+@using PlumbingBiddingTool.Application.Contractors
+@using PlumbingBiddingTool.Domain.Entities
+@inject JobService JobService
+@inject ContractorService ContractorService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer   
+
+<PageTitle>Job Details</PageTitle>
+
+@if (isLoading)
+{
+    <div class="loading-overlay">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2 text-light">Loading job details...</div>
+    </div>
+}
+
+@if (job == null)
+{
+    <p><em>Job not found.</em></p>
+}
+else
+{
+    <!-- Header Row -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">@job.JobName</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Contractor:</strong> @job.Contractor.Name</p>
+                    <p><strong>Status:</strong> <span class="badge @GetStatusBadgeClass(job.Status)">@job.Status</span></p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p><strong>Total Cost:</strong> <span class="h4">$@job.TotalCost.ToString("F2")</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row: Fixtures and Job Options -->
+    <div class="row mb-4">
+        <!-- Left Column: Fixture Items -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Fixture Items</h5>
+                </div>
+                <div class="card-body">
+                    @if (job.JobFixtureItems.Count == 0)
+                    {
+                        <p><em>No fixture items added.</em></p>
+                    }
+                    else
+                    {
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th style="width: 80px;">Qty</th>
+                                    <th style="width: 100px;">Price</th>
+                                    <th style="width: 100px;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in job.JobFixtureItems)
+                                {
+                                    <tr>
+                                        <td>@item.FixtureItem?.Name</td>
+                                        <td>@item.Quantity</td>
+                                        <td>$@item.Price.ToString("F2")</td>
+                                        <td>$@((item.Price * item.Quantity).ToString("F2"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <p><strong>Subtotal:</strong> $@(job.JobFixtureItems.Sum(jfi => jfi.Price * jfi.Quantity).ToString("F2"))</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Job Options -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Job Options</h5>
+                </div>
+                <div class="card-body">
+                    @if (job.JobOptions.Count == 0)
+                    {
+                        <p><em>No job options added.</em></p>
+                    }
+                    else
+                    {
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th style="width: 80px;">Qty</th>
+                                    <th style="width: 100px;">Price</th>
+                                    <th style="width: 100px;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var option in job.JobOptions)
+                                {
+                                    <tr>
+                                        <td>@option.Name</td>
+                                        <td>@option.Quantity</td>
+                                        <td>$@option.Price.ToString("F2")</td>
+                                        <td>$@((option.Price * option.Quantity).ToString("F2"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <p><strong>Subtotal:</strong> $@(job.JobOptions.Sum(jo => jo.Price * jo.Quantity).ToString("F2"))</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bid Items Row -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Bid Items Summary</h5>
+        </div>
+        <div class="card-body">
+            @if (bidItemsSummary.Count == 0)
+            {
+                <p><em>No bid items in this job.</em></p>
+            }
+            else
+            {
+                @foreach (var phaseGroup in bidItemsSummary.GroupBy(b => b.Phase).OrderBy(g => g.Key))
+                {
+                    <h6 class="mt-3 mb-2">@GetPhaseDisplayName(phaseGroup.Key)</h6>
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th style="width: 80px;">Qty</th>
+                                <th style="width: 100px;">Unit Price</th>
+                                <th style="width: 100px;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in phaseGroup)
+                            {
+                                <tr>
+                                    <td>@item.Name</td>
+                                    <td>@item.TotalQuantity</td>
+                                    <td>$@item.Price.ToString("F2")</td>
+                                    <td>$@((item.Price * item.TotalQuantity).ToString("F2"))</td>
+                                </tr>
+                            }
+                            <tr class="table-secondary">
+                                <td colspan="3" class="text-end"><strong>@GetPhaseDisplayName(phaseGroup.Key) Subtotal:</strong></td>
+                                <td><strong>$@phaseGroup.Sum(i => i.Price * i.TotalQuantity).ToString("F2")</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                }
+                <div class="mt-3">
+                    <h6><strong>Total Bid Items Cost: $@bidItemsSummary.Sum(i => i.Price * i.TotalQuantity).ToString("F2")</strong></h6>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mb-4">
+        <button class="btn btn-primary" @onclick="() => EditJob()">Edit Job</button>
+        <button class="btn btn-secondary" @onclick="() => BackToJobs()">Back to Jobs</button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int JobId { get; set; }
+
+    private Job? job;
+    private List<BidItemSummary> bidItemsSummary = new();
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        job = await JobService.GetJobByIdAsync(JobId);
+        
+        if (job != null)
+        {
+            // Build bid items summary from all fixture items
+            var bidItemsDict = new Dictionary<int, BidItemSummary>();
+            
+            foreach (var jobFixture in job.JobFixtureItems)
+            {
+                if (jobFixture.FixtureItem?.BidItems != null)
+                {
+                    foreach (var bidItem in jobFixture.FixtureItem.BidItems)
+                    {
+                        if (bidItemsDict.ContainsKey(bidItem.Id))
+                        {
+                            bidItemsDict[bidItem.Id].TotalQuantity += jobFixture.Quantity;
+                        }
+                        else
+                        {
+                            bidItemsDict[bidItem.Id] = new BidItemSummary
+                            {
+                                Name = bidItem.Name,
+                                Price = bidItem.Price,
+                                Phase = bidItem.Phase,
+                                TotalQuantity = jobFixture.Quantity
+                            };
+                        }
+                    }
+                }
+            }
+            
+            bidItemsSummary = bidItemsDict.Values.ToList();
+        }
+        
+        isLoading = false;
+    }
+
+    private string GetStatusBadgeClass(JobStatus status)
+    {
+        return status switch
+        {
+            JobStatus.Open => "bg-primary",
+            JobStatus.Accepted => "bg-success",
+            JobStatus.Closed => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetPhaseDisplayName(Phase phase)
+    {
+        return phase switch
+        {
+            Phase.Underground => "Underground",
+            Phase.StackOut => "Stack Out",
+            Phase.Trim => "Trim",
+            _ => phase.ToString()
+        };
+    }
+
+    public void EditJob()
+    {
+        NavigationManager.NavigateTo($"/jobs/edit/{JobId}");
+    }
+
+    public void BackToJobs()
+    {
+        NavigationManager.NavigateTo("/jobs");
+    }
+    
+    private class BidItemSummary
+    {
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public Phase Phase { get; set; }
+        public int TotalQuantity { get; set; }
+    }
+}

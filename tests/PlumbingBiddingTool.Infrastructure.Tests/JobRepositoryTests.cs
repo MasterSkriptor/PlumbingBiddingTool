@@ -51,7 +51,7 @@ public class JobRepositoryTests
 
         var contractor = new Contractor { Name = "Test Contractor" };
         var fixtureItem = new FixtureItem { Name = "Test Fixture" };
-        fixtureItem.BidItems.Add(new BidItem { Name = "Bid Item 1", Price = 50.00m });
+        fixtureItem.BidItems.Add(new BidItem { Name = "Bid Item 1", Price = 50.00m, Phase = Phase.Underground });
         
         context.Contractors.Add(contractor);
         context.FixtureItems.Add(fixtureItem);

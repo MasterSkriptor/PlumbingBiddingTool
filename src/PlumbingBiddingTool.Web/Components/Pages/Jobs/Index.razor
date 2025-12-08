@@ -64,9 +64,25 @@ else
                     <td>@job.JobName</td>
                     <td>@job.Contractor.Name</td>
                     <td>
-                        <span class="badge @GetStatusBadgeClass(job.Status)">
+                        <button class="badge @GetStatusBadgeClass(job.Status) btn-none border-0" 
+                                style="cursor: pointer; padding: 0.5rem; border-radius: 0.25rem;"
+                                @onclick="() => ShowStatusDropdown(job.Id, job.Status)">
                             @job.Status
-                        </span>
+                        </button>
+                        @if (statusDropdownJobId == job.Id)
+                        {
+                            <div class="dropdown-menu show" style="position: absolute; display: block; min-width: 150px; z-index: 100;">
+                                @foreach (JobStatus status in Enum.GetValues(typeof(JobStatus)))
+                                {
+                                    <button class="dropdown-item" @onclick="() => ChangeJobStatus(job.Id, status)" style="border: none; background: none; text-align: left; width: 100%; padding: 0.5rem 1rem;">
+                                        @status
+                                    </button>
+                                }
+                                <button class="dropdown-item" @onclick="() => statusDropdownJobId = 0" style="border: none; background: none; text-align: left; width: 100%; padding: 0.5rem 1rem; color: #6c757d;">
+                                    Cancel
+                                </button>
+                            </div>
+                        }
                     </td>
                     <td>$@job.TotalCost.ToString("F2")</td>
                     <td>@job.JobFixtureItems.Count item(s)</td>
@@ -74,6 +90,12 @@ else
                         <button class="btn btn-sm btn-info" @onclick="() => EditJob(job.Id)">Edit</button>
                         <button class="btn btn-sm btn-danger" @onclick="() => DeleteJob(job.Id)">Delete</button>
                     </td>
+
+                        <td>
+                            <button class="btn btn-sm btn-secondary" @onclick="() => ViewJobDetails(job.Id)">View Details</button>
+                            <button class="btn btn-sm btn-info" @onclick="() => EditJob(job.Id)">Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteJob(job.Id)">Delete</button>
+                        </td>
                 </tr>
             }
         </tbody>
@@ -126,6 +148,11 @@ else
         NavigationManager.NavigateTo("/jobs/create");
     }
 
+    private void ViewJobDetails(int jobId)
+    {
+        NavigationManager.NavigateTo($"/jobs/details/{jobId}");
+    }
+
     private void EditJob(int jobId)
     {
         NavigationManager.NavigateTo($"/jobs/edit/{jobId}");
@@ -151,4 +178,27 @@ else
     }
 
     private bool isLoading = false;
+    private int statusDropdownJobId = 0;
+
+    private void ShowStatusDropdown(int jobId, JobStatus currentStatus)
+    {
+        statusDropdownJobId = statusDropdownJobId == jobId ? 0 : jobId;
+    }
+
+    private async Task ChangeJobStatus(int jobId, JobStatus newStatus)
+    {
+        statusDropdownJobId = 0;
+        isLoading = true;
+        
+        var job = jobs.FirstOrDefault(j => j.Id == jobId);
+        if (job != null)
+        {
+            await JobService.UpdateJobAsync(jobId, job.JobName, newStatus, 
+                job.JobFixtureItems.ToDictionary(jfi => jfi.FixtureItemId, jfi => jfi.Quantity));
+            await LoadJobs();
+        }
+        
+        isLoading = false;
+        
+    }
 }

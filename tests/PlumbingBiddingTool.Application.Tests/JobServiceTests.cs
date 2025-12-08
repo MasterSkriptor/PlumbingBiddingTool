@@ -85,8 +85,8 @@ public class JobServiceTests
             new FixtureItem { Id = 1, Name = "Fixture 1" },
             new FixtureItem { Id = 2, Name = "Fixture 2" }
         };
-        fixtures[0].BidItems.Add(new BidItem { Price = 50.00m });
-        fixtures[1].BidItems.Add(new BidItem { Price = 75.00m });
+        fixtures[0].BidItems.Add(new BidItem { Price = 50.00m, Phase = Phase.Underground });
+        fixtures[1].BidItems.Add(new BidItem { Price = 75.00m, Phase = Phase.StackOut });
 
         _mockFixtureRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(fixtures[0]);
         _mockFixtureRepository.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(fixtures[1]);
@@ -141,8 +141,8 @@ public class JobServiceTests
             new FixtureItem { Id = 1, Name = "Existing Fixture" },
             new FixtureItem { Id = 2, Name = "New Fixture" }
         };
-        allFixtures[0].BidItems.Add(new BidItem { Price = 50.00m });
-        allFixtures[1].BidItems.Add(new BidItem { Price = 100.00m });
+        allFixtures[0].BidItems.Add(new BidItem { Price = 50.00m, Phase = Phase.Trim });
+        allFixtures[1].BidItems.Add(new BidItem { Price = 100.00m, Phase = Phase.StackOut });
 
         _mockJobRepository.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(existingJob);
         _mockFixtureRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(allFixtures);
