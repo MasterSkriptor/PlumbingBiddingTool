@@ -43,11 +43,11 @@ else
                 <div class="col-8">
                     <h1 class="estimate-title">PLUMBING ESTIMATE</h1>
                     <div class="company-info">
-                        <strong>Your Company Name</strong><br />
-                        123 Business Street<br />
-                        City, State 12345<br />
-                        Phone: (555) 123-4567<br />
-                        Email: info@company.com
+                        <strong>@DisplayOrPlaceholder(companyInfo.Name, "Your Company Name")</strong><br />
+                        @DisplayOrPlaceholder(companyInfo.Address, "123 Business Street")<br />
+                        @DisplayOrPlaceholder(companyInfo.CityStateZip, "City, State 12345")<br />
+                        Phone: @DisplayOrPlaceholder(companyInfo.Phone, "(555) 123-4567")<br />
+                        Email: @DisplayOrPlaceholder(companyInfo.Email, "info@company.com")
                     </div>
                 </div>
                 <div class="col-4 text-end">
@@ -229,6 +229,7 @@ else
     private Job? job;
     private List<BidItemSummary> bidItemsSummary = new();
     private bool isLoading = false;
+    private CompanyInfo companyInfo = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -270,6 +271,23 @@ else
         isLoading = false;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "companyInfo");
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                var loaded = System.Text.Json.JsonSerializer.Deserialize<CompanyInfo>(json);
+                if (loaded != null)
+                {
+                    companyInfo = loaded;
+                    StateHasChanged();
+                }
+            }
+        }
+    }
+
     private string GetStatusBadgeClass(JobStatus status)
     {
         return status switch
@@ -305,6 +323,20 @@ else
     private async Task PrintEstimate()
     {
         await JSRuntime.InvokeVoidAsync("window.print");
+    }
+
+    private string DisplayOrPlaceholder(string value, string placeholder)
+    {
+        return string.IsNullOrWhiteSpace(value) ? placeholder : value;
+    }
+
+    private class CompanyInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string CityStateZip { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
     }
     
     private class BidItemSummary

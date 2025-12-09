@@ -6,4 +6,5 @@ public class BidItem
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public Phase Phase { get; set; } = Phase.Underground;
+    public ItemType ItemType { get; set; } = ItemType.Sewer;
 }

@@ -22,19 +22,20 @@ public class BidItemService
         return await _repository.GetByIdAsync(id);
     }
 
-    public async Task<BidItem> CreateBidItemAsync(string name, decimal price, Phase phase)
+    public async Task<BidItem> CreateBidItemAsync(string name, decimal price, Phase phase, ItemType itemType)
     {
         var bidItem = new BidItem
         {
             Name = name,
             Price = price,
-            Phase = phase
+            Phase = phase,
+            ItemType = itemType
         };
 
         return await _repository.AddAsync(bidItem);
     }
 
-    public async Task UpdateBidItemAsync(int id, string name, decimal price, Phase phase)
+    public async Task UpdateBidItemAsync(int id, string name, decimal price, Phase phase, ItemType itemType)
     {
         var bidItem = await _repository.GetByIdAsync(id);
         if (bidItem != null)
@@ -42,6 +43,7 @@ public class BidItemService
             bidItem.Name = name;
             bidItem.Price = price;
             bidItem.Phase = phase;
+            bidItem.ItemType = itemType;
             await _repository.UpdateAsync(bidItem);
         }
     }

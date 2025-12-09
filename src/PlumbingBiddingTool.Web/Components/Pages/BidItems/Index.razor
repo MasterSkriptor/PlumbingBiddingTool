@@ -32,6 +32,15 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label">Item Type:</label>
+                    <InputSelect class="form-select" @bind-Value="formModel.ItemType">
+                        <option value="@ItemType.Sewer">Sewer</option>
+                        <option value="@ItemType.Water">Water</option>
+                        <option value="@ItemType.Gas">Gas</option>
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label">Phase:</label>
                     <InputSelect class="form-select" @bind-Value="formModel.Phase">
                         <option value="@Phase.Underground">Underground</option>
@@ -62,6 +71,7 @@ else
             <tr>
                 <th>Name</th>
                 <th>Price</th>
+                <th>Item Type</th>
                 <th>Phase</th>
                 <th>Actions</th>
             </tr>
@@ -72,6 +82,7 @@ else
                 <tr>
                     <td>@item.Name</td>
                     <td>@item.Price.ToString("C")</td>
+                    <td>@GetItemTypeDisplayName(item.ItemType)</td>
                     <td>@GetPhaseDisplayName(item.Phase)</td>
                     <td>
                         <button class="btn btn-sm btn-warning" @onclick="() => EditItem(item)">Edit</button>
@@ -97,7 +108,10 @@ else
     private async Task LoadBidItems()
     {
         var items = await BidItemService.GetAllBidItemsAsync();
-        bidItems = items.ToList();
+        bidItems = items
+            .OrderBy(b => b.Phase)
+            .ThenBy(b => b.Name)
+            .ToList();
     }
 
     private void ShowAddForm()
@@ -110,7 +124,7 @@ else
     private void EditItem(BidItem item)
     {
         editingItem = item;
-        formModel = new BidItemFormModel { Name = item.Name, Price = item.Price, Phase = item.Phase };
+        formModel = new BidItemFormModel { Name = item.Name, Price = item.Price, Phase = item.Phase, ItemType = item.ItemType };
         showForm = true;
     }
 
@@ -125,11 +139,11 @@ else
     {
         if (editingItem == null)
         {
-            await BidItemService.CreateBidItemAsync(formModel.Name, formModel.Price, formModel.Phase);
+            await BidItemService.CreateBidItemAsync(formModel.Name, formModel.Price, formModel.Phase, formModel.ItemType);
         }
         else
         {
-            await BidItemService.UpdateBidItemAsync(editingItem.Id, formModel.Name, formModel.Price, formModel.Phase);
+            await BidItemService.UpdateBidItemAsync(editingItem.Id, formModel.Name, formModel.Price, formModel.Phase, formModel.ItemType);
         }
 
         await LoadBidItems();
@@ -153,10 +167,22 @@ else
         };
     }
 
+    private string GetItemTypeDisplayName(ItemType itemType)
+    {
+        return itemType switch
+        {
+            ItemType.Sewer => "Sewer",
+            ItemType.Water => "Water",
+            ItemType.Gas => "Gas",
+            _ => itemType.ToString()
+        };
+    }
+
     private class BidItemFormModel
     {
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public Phase Phase { get; set; } = Phase.Underground;
+        public ItemType ItemType { get; set; } = ItemType.Sewer;
     }
 }
