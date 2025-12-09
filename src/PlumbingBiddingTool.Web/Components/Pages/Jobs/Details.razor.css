@@ -1,0 +1,256 @@
+/* Screen styles */
+.estimate-container {
+    background: white;
+    padding: 2rem;
+    max-width: 8.5in;
+    margin: 0 auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.estimate-header {
+    margin-bottom: 1.5rem;
+}
+
+.estimate-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #0d6efd;
+    margin-bottom: 1rem;
+}
+
+.company-info {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.estimate-number {
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.status-open {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.status-accepted {
+    background-color: #198754;
+    color: white;
+}
+
+.status-closed {
+    background-color: #6c757d;
+    color: white;
+}
+
+.estimate-divider {
+    border-top: 2px solid #0d6efd;
+    margin: 1.5rem 0;
+}
+
+.customer-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-left: 4px solid #0d6efd;
+}
+
+.customer-section h5 {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+}
+
+.customer-info {
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+.customer-info div {
+    margin-bottom: 0.25rem;
+}
+
+.estimate-section {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #0d6efd;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.phase-header {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #495057;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    padding-left: 0.5rem;
+    border-left: 3px solid #0d6efd;
+}
+
+.estimate-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    border: 1px solid #dee2e6;
+}
+
+.estimate-table thead {
+    background-color: #e9ecef;
+}
+
+.estimate-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    border: 1px solid #dee2e6;
+    color: #495057;
+}
+
+.estimate-table td {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #dee2e6;
+}
+
+.estimate-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.subtotal-row {
+    background-color: #e9ecef !important;
+    font-weight: 600;
+}
+
+.subtotal-row td {
+    padding: 0.75rem;
+    border-top: 2px solid #adb5bd;
+}
+
+.estimate-total {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white;
+    border-radius: 0.5rem;
+}
+
+.estimate-total h4 {
+    margin: 0;
+    font-weight: bold;
+}
+
+.total-amount {
+    font-size: 2rem;
+}
+
+.estimate-footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #dee2e6;
+}
+
+.estimate-footer h6 {
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.estimate-footer ul {
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.8;
+}
+
+.signature-box {
+    text-align: center;
+}
+
+.signature-line-border {
+    border-bottom: 2px solid #000;
+    margin-bottom: 0.5rem;
+    height: 40px;
+}
+
+.signature-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+.no-print {
+    margin-bottom: 1rem;
+}
+
+/* Print styles */
+@media print {
+    @page {
+        size: letter;
+        margin: 0.5in;
+    }
+
+    body {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .estimate-container {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .estimate-total {
+        background: #0d6efd !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .estimate-table tbody tr:hover {
+        background-color: transparent;
+    }
+
+    /* Avoid page breaks inside tables */
+    .estimate-section {
+        page-break-inside: avoid;
+    }
+
+    .estimate-table {
+        page-break-inside: auto;
+    }
+
+    .estimate-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    .estimate-table thead {
+        display: table-header-group;
+    }
+
+    .phase-header {
+        page-break-after: avoid;
+    }
+
+    /* Keep footer on last page */
+    .estimate-footer {
+        page-break-inside: avoid;
+    }
+}

@@ -9,13 +9,15 @@ public class JobServiceTests
 {
     private readonly Mock<IJobRepository> _mockJobRepository;
     private readonly Mock<IFixtureItemRepository> _mockFixtureRepository;
+    private readonly Mock<IJobOptionRepository> _mockJobOptionRepository;
     private readonly JobService _service;
 
     public JobServiceTests()
     {
         _mockJobRepository = new Mock<IJobRepository>();
         _mockFixtureRepository = new Mock<IFixtureItemRepository>();
-        _service = new JobService(_mockJobRepository.Object, _mockFixtureRepository.Object);
+        _mockJobOptionRepository = new Mock<IJobOptionRepository>();
+        _service = new JobService(_mockJobRepository.Object, _mockFixtureRepository.Object, _mockJobOptionRepository.Object);
     }
 
     [Fact]
@@ -101,7 +103,7 @@ public class JobServiceTests
             .ReturnsAsync((Job j) => { j.Id = 1; return j; });
 
         // Act
-        var result = await _service.CreateJobAsync(1, "Test Job", fixtureQuantities);
+        var result = await _service.CreateJobAsync(1, "Test Job", fixtureQuantities, Array.Empty<JobOptionInput>());
 
         // Assert
         Assert.NotNull(result);
@@ -155,7 +157,7 @@ public class JobServiceTests
         };
 
         // Act
-        await _service.UpdateJobAsync(1, "Existing Job", JobStatus.Open, fixtureQuantities);
+        await _service.UpdateJobAsync(1, "Existing Job", JobStatus.Open, fixtureQuantities, Array.Empty<JobOptionInput>());
 
         // Assert
         // With current Update logic, only items with quantity > 0 are kept.

@@ -73,6 +73,42 @@
                 </table>
             </div>
 
+            <h5 class="mb-3">Job Options</h5>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th style="width: 100px;">Quantity</th>
+                            <th style="width: 140px;">Price</th>
+                            <th style="width: 80px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var option in jobOptions)
+                        {
+                            <tr>
+                                <td>
+                                    <InputText class="form-control form-control-sm" @bind-Value="option.Name" />
+                                </td>
+                                <td>
+                                    <InputNumber class="form-control form-control-sm" @bind-Value="option.Quantity" Min="0" />
+                                </td>
+                                <td>
+                                    <InputNumber class="form-control form-control-sm" @bind-Value="option.Price" Min="0" Step="0.01" />
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveOption(option)" aria-label="Remove option">
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-outline-primary btn-sm" @onclick="AddOption">Add Option</button>
+            </div>
+
             <div class="alert alert-info mt-3">
                 <strong>Total Cost: $@CalculateTotalCost().ToString("F2")</strong>
             </div>
@@ -90,6 +126,7 @@
     private List<Contractor> contractors = new();
     private List<FixtureItem> availableFixtures = new();
     private Dictionary<int, int> fixtureQuantities = new();
+    private List<JobOptionInput> jobOptions = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,7 +139,18 @@
         {
             fixtureQuantities[fixture.Id] = 0;
         }
+        jobOptions.Add(new JobOptionInput());
         isLoading = false;
+    }
+
+    private void AddOption()
+    {
+        jobOptions.Add(new JobOptionInput());
+    }
+
+    private void RemoveOption(JobOptionInput option)
+    {
+        jobOptions.Remove(option);
     }
 
     private void UpdateQuantity(int fixtureId, object? value)
@@ -115,9 +163,15 @@
 
     private decimal CalculateTotalCost()
     {
-        return availableFixtures
+        var fixturesTotal = availableFixtures
             .Where(f => fixtureQuantities.ContainsKey(f.Id))
             .Sum(f => f.Price * fixtureQuantities[f.Id]);
+
+        var optionsTotal = jobOptions
+            .Where(o => !string.IsNullOrWhiteSpace(o.Name) && o.Quantity > 0)
+            .Sum(o => o.Price * o.Quantity);
+
+        return fixturesTotal + optionsTotal;
     }
 
     private bool IsValid()
@@ -130,7 +184,7 @@
         if (!IsValid()) return;
 
         isLoading = true;
-        await JobService.CreateJobAsync(jobModel.ContractorId, jobModel.JobName, fixtureQuantities);
+        await JobService.CreateJobAsync(jobModel.ContractorId, jobModel.JobName, fixtureQuantities, jobOptions);
         isLoading = false;
         NavigationManager.NavigateTo("/jobs");
     }

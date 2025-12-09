@@ -7,11 +7,13 @@ public class JobService
 {
     private readonly IJobRepository _jobRepository;
     private readonly IFixtureItemRepository _fixtureItemRepository;
+    private readonly IJobOptionRepository _jobOptionRepository;
 
-    public JobService(IJobRepository jobRepository, IFixtureItemRepository fixtureItemRepository)
+    public JobService(IJobRepository jobRepository, IFixtureItemRepository fixtureItemRepository, IJobOptionRepository jobOptionRepository)
     {
         _jobRepository = jobRepository;
         _fixtureItemRepository = fixtureItemRepository;
+        _jobOptionRepository = jobOptionRepository;
     }
 
     public async Task<IEnumerable<Job>> GetAllJobsAsync()
@@ -29,7 +31,7 @@ public class JobService
         return await _jobRepository.GetByIdAsync(id);
     }
 
-    public async Task<Job> CreateJobAsync(int contractorId, string jobName, Dictionary<int, int> fixtureQuantities)
+    public async Task<Job> CreateJobAsync(int contractorId, string jobName, Dictionary<int, int> fixtureQuantities, IEnumerable<JobOptionInput> jobOptions)
     {
         var job = new Job
         {
@@ -37,6 +39,16 @@ public class JobService
             JobName = jobName,
             Status = JobStatus.Open
         };
+
+        var optionItems = jobOptions
+            .Where(o => !string.IsNullOrWhiteSpace(o.Name) && o.Quantity > 0)
+            .Select(o => new JobOption
+            {
+                Name = o.Name.Trim(),
+                Quantity = o.Quantity,
+                Price = o.Price
+            })
+            .ToList();
 
         // Create JobFixtureItems with price snapshots
         var jobFixtureItems = new List<JobFixtureItem>();
@@ -58,10 +70,11 @@ public class JobService
         }
 
         job.JobFixtureItems = jobFixtureItems;
+        job.JobOptions = optionItems;
         return await _jobRepository.AddAsync(job);
     }
 
-    public async Task UpdateJobAsync(int jobId, string jobName, JobStatus status, Dictionary<int, int> fixtureQuantities)
+    public async Task UpdateJobAsync(int jobId, string jobName, JobStatus status, Dictionary<int, int> fixtureQuantities, IEnumerable<JobOptionInput> jobOptions)
     {
         var job = await _jobRepository.GetByIdAsync(jobId);
         if (job == null) return;
@@ -105,6 +118,28 @@ public class JobService
         }
 
         job.JobFixtureItems = updatedItems;
+
+        // Replace job options with provided list
+        var existingOptions = (await _jobOptionRepository.GetByJobIdAsync(jobId)).ToList();
+        foreach (var option in existingOptions)
+        {
+            await _jobOptionRepository.DeleteAsync(option.Id);
+        }
+
+        var newOptions = new List<JobOption>();
+        foreach (var option in jobOptions.Where(o => !string.IsNullOrWhiteSpace(o.Name) && o.Quantity > 0))
+        {
+            var created = await _jobOptionRepository.AddAsync(new JobOption
+            {
+                JobId = jobId,
+                Name = option.Name.Trim(),
+                Quantity = option.Quantity,
+                Price = option.Price
+            });
+            newOptions.Add(created);
+        }
+
+        job.JobOptions = newOptions;
         await _jobRepository.UpdateAsync(job);
     }
 

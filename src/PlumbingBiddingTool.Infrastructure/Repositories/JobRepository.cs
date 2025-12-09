@@ -20,6 +20,7 @@ public class JobRepository : IJobRepository
             .Include(j => j.Contractor)
             .Include(j => j.JobFixtureItems)
                 .ThenInclude(jfi => jfi.FixtureItem)
+            .Include(j => j.JobOptions)
             .ToListAsync();
     }
 
@@ -29,6 +30,7 @@ public class JobRepository : IJobRepository
             .Include(j => j.Contractor)
             .Include(j => j.JobFixtureItems)
                 .ThenInclude(jfi => jfi.FixtureItem)
+            .Include(j => j.JobOptions)
             .Where(j => j.ContractorId == contractorId)
             .ToListAsync();
     }
@@ -40,6 +42,7 @@ public class JobRepository : IJobRepository
             .Include(j => j.JobFixtureItems)
                 .ThenInclude(jfi => jfi.FixtureItem)
                     .ThenInclude(fi => fi.BidItems)
+            .Include(j => j.JobOptions)
             .FirstOrDefaultAsync(j => j.Id == id);
     }
 

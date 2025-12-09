@@ -5,9 +5,10 @@
 @inject JobService JobService
 @inject ContractorService ContractorService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer   
 
-<PageTitle>Job Details</PageTitle>
+<PageTitle>Estimate - @job?.JobName</PageTitle>
 
 @if (isLoading)
 {
@@ -25,129 +26,132 @@
 }
 else
 {
-    <!-- Header Row -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">@job.JobName</h2>
-        </div>
-        <div class="card-body">
+    <!-- Action Buttons - Screen Only -->
+    <div class="no-print mb-3">
+        <button class="btn btn-success" @onclick="PrintEstimate">
+            <i class="bi bi-printer"></i> Print Estimate
+        </button>
+        <button class="btn btn-primary" @onclick="() => EditJob()">Edit Job</button>
+        <button class="btn btn-secondary" @onclick="() => BackToJobs()">Back to Jobs</button>
+    </div>
+
+    <!-- Estimate Container -->
+    <div class="estimate-container">
+        <!-- Letterhead -->
+        <div class="estimate-header">
             <div class="row">
-                <div class="col-md-6">
-                    <p><strong>Contractor:</strong> @job.Contractor.Name</p>
-                    <p><strong>Status:</strong> <span class="badge @GetStatusBadgeClass(job.Status)">@job.Status</span></p>
+                <div class="col-8">
+                    <h1 class="estimate-title">PLUMBING ESTIMATE</h1>
+                    <div class="company-info">
+                        <strong>Your Company Name</strong><br />
+                        123 Business Street<br />
+                        City, State 12345<br />
+                        Phone: (555) 123-4567<br />
+                        Email: info@company.com
+                    </div>
                 </div>
-                <div class="col-md-6 text-end">
-                    <p><strong>Total Cost:</strong> <span class="h4">$@job.TotalCost.ToString("F2")</span></p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Content Row: Fixtures and Job Options -->
-    <div class="row mb-4">
-        <!-- Left Column: Fixture Items -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Fixture Items</h5>
-                </div>
-                <div class="card-body">
-                    @if (job.JobFixtureItems.Count == 0)
-                    {
-                        <p><em>No fixture items added.</em></p>
-                    }
-                    else
-                    {
-                        <table class="table table-sm table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th style="width: 80px;">Qty</th>
-                                    <th style="width: 100px;">Price</th>
-                                    <th style="width: 100px;">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in job.JobFixtureItems)
-                                {
-                                    <tr>
-                                        <td>@item.FixtureItem?.Name</td>
-                                        <td>@item.Quantity</td>
-                                        <td>$@item.Price.ToString("F2")</td>
-                                        <td>$@((item.Price * item.Quantity).ToString("F2"))</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                        <p><strong>Subtotal:</strong> $@(job.JobFixtureItems.Sum(jfi => jfi.Price * jfi.Quantity).ToString("F2"))</p>
-                    }
+                <div class="col-4 text-end">
+                    <div class="estimate-number">
+                        <strong>Estimate #:</strong> @JobId.ToString("D6")<br />
+                        <strong>Date:</strong> @DateTime.Now.ToString("MM/dd/yyyy")<br />
+                        <strong>Status:</strong> <span class="status-badge status-@job.Status.ToString().ToLower()">@job.Status</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Job Options -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Job Options</h5>
-                </div>
-                <div class="card-body">
-                    @if (job.JobOptions.Count == 0)
-                    {
-                        <p><em>No job options added.</em></p>
-                    }
-                    else
-                    {
-                        <table class="table table-sm table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th style="width: 80px;">Qty</th>
-                                    <th style="width: 100px;">Price</th>
-                                    <th style="width: 100px;">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var option in job.JobOptions)
-                                {
-                                    <tr>
-                                        <td>@option.Name</td>
-                                        <td>@option.Quantity</td>
-                                        <td>$@option.Price.ToString("F2")</td>
-                                        <td>$@((option.Price * option.Quantity).ToString("F2"))</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                        <p><strong>Subtotal:</strong> $@(job.JobOptions.Sum(jo => jo.Price * jo.Quantity).ToString("F2"))</p>
-                    }
-                </div>
+        <hr class="estimate-divider" />
+
+        <!-- Customer Information -->
+        <div class="customer-section">
+            <h5>PREPARED FOR:</h5>
+            <div class="customer-info">
+                <div><strong>Contractor:</strong> @job.Contractor.Name</div>
+                <div><strong>Project:</strong> @job.JobName</div>
             </div>
         </div>
-    </div>
 
-    <!-- Bid Items Row -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">Bid Items Summary</h5>
-        </div>
-        <div class="card-body">
-            @if (bidItemsSummary.Count == 0)
-            {
-                <p><em>No bid items in this job.</em></p>
-            }
-            else
-            {
+        <!-- Fixture Items Section -->
+        @if (job.JobFixtureItems.Count > 0)
+        {
+            <div class="estimate-section">
+                <h5 class="section-title">FIXTURE ITEMS</h5>
+                <table class="estimate-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th class="text-center" style="width: 80px;">Qty</th>
+                            <th class="text-end" style="width: 120px;">Unit Price</th>
+                            <th class="text-end" style="width: 120px;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in job.JobFixtureItems)
+                        {
+                            <tr>
+                                <td>@item.FixtureItem?.Name</td>
+                                <td class="text-center">@item.Quantity</td>
+                                <td class="text-end">$@item.Price.ToString("N2")</td>
+                                <td class="text-end">$@((item.Price * item.Quantity).ToString("N2"))</td>
+                            </tr>
+                        }
+                        <tr class="subtotal-row">
+                            <td colspan="3" class="text-end"><strong>Fixture Items Subtotal:</strong></td>
+                            <td class="text-end"><strong>$@(job.JobFixtureItems.Sum(jfi => jfi.Price * jfi.Quantity).ToString("N2"))</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- Job Options Section -->
+        @if (job.JobOptions.Count > 0)
+        {
+            <div class="estimate-section">
+                <h5 class="section-title">OPTIONAL ITEMS</h5>
+                <table class="estimate-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th class="text-center" style="width: 80px;">Qty</th>
+                            <th class="text-end" style="width: 120px;">Unit Price</th>
+                            <th class="text-end" style="width: 120px;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var option in job.JobOptions)
+                        {
+                            <tr>
+                                <td>@option.Name</td>
+                                <td class="text-center">@option.Quantity</td>
+                                <td class="text-end">$@option.Price.ToString("N2")</td>
+                                <td class="text-end">$@((option.Price * option.Quantity).ToString("N2"))</td>
+                            </tr>
+                        }
+                        <tr class="subtotal-row">
+                            <td colspan="3" class="text-end"><strong>Optional Items Subtotal:</strong></td>
+                            <td class="text-end"><strong>$@(job.JobOptions.Sum(jo => jo.Price * jo.Quantity).ToString("N2"))</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- Bid Items by Phase -->
+        @if (bidItemsSummary.Count > 0)
+        {
+            <div class="estimate-section">
+                <h5 class="section-title">DETAILED BID ITEMS BY PHASE</h5>
                 @foreach (var phaseGroup in bidItemsSummary.GroupBy(b => b.Phase).OrderBy(g => g.Key))
                 {
-                    <h6 class="mt-3 mb-2">@GetPhaseDisplayName(phaseGroup.Key)</h6>
-                    <table class="table table-sm table-bordered">
+                    <h6 class="phase-header">@GetPhaseDisplayName(phaseGroup.Key)</h6>
+                    <table class="estimate-table">
                         <thead>
                             <tr>
-                                <th>Item Name</th>
-                                <th style="width: 80px;">Qty</th>
-                                <th style="width: 100px;">Unit Price</th>
-                                <th style="width: 100px;">Total</th>
+                                <th>Description</th>
+                                <th class="text-center" style="width: 80px;">Qty</th>
+                                <th class="text-end" style="width: 120px;">Unit Price</th>
+                                <th class="text-end" style="width: 120px;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -155,29 +159,66 @@ else
                             {
                                 <tr>
                                     <td>@item.Name</td>
-                                    <td>@item.TotalQuantity</td>
-                                    <td>$@item.Price.ToString("F2")</td>
-                                    <td>$@((item.Price * item.TotalQuantity).ToString("F2"))</td>
+                                    <td class="text-center">@item.TotalQuantity</td>
+                                    <td class="text-end">$@item.Price.ToString("N2")</td>
+                                    <td class="text-end">$@((item.Price * item.TotalQuantity).ToString("N2"))</td>
                                 </tr>
                             }
-                            <tr class="table-secondary">
+                            <tr class="subtotal-row">
                                 <td colspan="3" class="text-end"><strong>@GetPhaseDisplayName(phaseGroup.Key) Subtotal:</strong></td>
-                                <td><strong>$@phaseGroup.Sum(i => i.Price * i.TotalQuantity).ToString("F2")</strong></td>
+                                <td class="text-end"><strong>$@phaseGroup.Sum(i => i.Price * i.TotalQuantity).ToString("N2")</strong></td>
                             </tr>
                         </tbody>
                     </table>
                 }
-                <div class="mt-3">
-                    <h6><strong>Total Bid Items Cost: $@bidItemsSummary.Sum(i => i.Price * i.TotalQuantity).ToString("F2")</strong></h6>
-                </div>
-            }
-        </div>
-    </div>
+            </div>
+        }
 
-    <!-- Action Buttons -->
-    <div class="mb-4">
-        <button class="btn btn-primary" @onclick="() => EditJob()">Edit Job</button>
-        <button class="btn btn-secondary" @onclick="() => BackToJobs()">Back to Jobs</button>
+        <!-- Grand Total -->
+        <div class="estimate-total">
+            <div class="row">
+                <div class="col-8 text-end">
+                    <h4>TOTAL ESTIMATE:</h4>
+                </div>
+                <div class="col-4 text-end">
+                    <h4 class="total-amount">$@job.TotalCost.ToString("N2")</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terms and Conditions -->
+        <div class="estimate-footer">
+            <h6>TERMS & CONDITIONS</h6>
+            <ul>
+                <li>This estimate is valid for 30 days for approval from the date above.</li>
+                <li>Once accepted, this estimate is valid for one year unless otherwise agreed upon beforehand.</li>
+                <li>All work performed according to standard plumbing codes and regulations.</li>
+                <li>Payment terms: Project will be billed in four separate invoices based on completion of each phase:</li>
+                <ul>
+                    <li>Underground phase completion</li>
+                    <li>Stack Out phase completion</li>
+                    <li>Trim phase completion</li>
+                    <li>Sewer phase completion</li>
+                </ul>
+                <li>Any changes to scope may affect final pricing and require written approval.</li>
+            </ul>
+            <div class="signature-line">
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <div class="signature-box">
+                            <div class="signature-line-border"></div>
+                            <p class="signature-label">Contractor Signature</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="signature-box">
+                            <div class="signature-line-border"></div>
+                            <p class="signature-label">Date</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
@@ -259,6 +300,11 @@ else
     public void BackToJobs()
     {
         NavigationManager.NavigateTo("/jobs");
+    }
+
+    private async Task PrintEstimate()
+    {
+        await JSRuntime.InvokeVoidAsync("window.print");
     }
     
     private class BidItemSummary

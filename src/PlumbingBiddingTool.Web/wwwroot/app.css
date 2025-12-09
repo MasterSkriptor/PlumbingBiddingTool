@@ -59,9 +59,9 @@ h1:focus {
     text-align: start;
 }
 
-/* Navbar gradient: blue to black */
+/* Navbar solid black to match requested top bar */
 .top-row.navbar {
-    background: linear-gradient(90deg, #0d6efd 0%, #000000 100%);
+    background: #000;
 }
 
 /* Loading overlay styles */

@@ -86,11 +86,6 @@ else
                     </td>
                     <td>$@job.TotalCost.ToString("F2")</td>
                     <td>@job.JobFixtureItems.Count item(s)</td>
-                    <td>
-                        <button class="btn btn-sm btn-info" @onclick="() => EditJob(job.Id)">Edit</button>
-                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteJob(job.Id)">Delete</button>
-                    </td>
-
                         <td>
                             <button class="btn btn-sm btn-secondary" @onclick="() => ViewJobDetails(job.Id)">View Details</button>
                             <button class="btn btn-sm btn-info" @onclick="() => EditJob(job.Id)">Edit</button>
@@ -193,8 +188,16 @@ else
         var job = jobs.FirstOrDefault(j => j.Id == jobId);
         if (job != null)
         {
+            var existingOptions = job.JobOptions.Select(o => new JobOptionInput 
+            { 
+                Name = o.Name, 
+                Quantity = o.Quantity, 
+                Price = o.Price 
+            }).ToList();
+            
             await JobService.UpdateJobAsync(jobId, job.JobName, newStatus, 
-                job.JobFixtureItems.ToDictionary(jfi => jfi.FixtureItemId, jfi => jfi.Quantity));
+                job.JobFixtureItems.ToDictionary(jfi => jfi.FixtureItemId, jfi => jfi.Quantity),
+                existingOptions);
             await LoadJobs();
         }
         
