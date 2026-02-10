@@ -1,9 +1,9 @@
-# Development Plan - Plumbing Fixture Identifier
+# Development Plan - Plumbing Bidding Tool
 
-**Project:** Plumbing Fixture Identifier (PFI Service)  
-**Version:** MVP 1.0  
+**Project:** Plumbing Bidding Tool  
+**Version:** 1.0  
 **Team:** One Developer + GitHub Copilot  
-**Timeline:** 4-6 Weeks  
+**Current Status:** MVP Foundation Complete  
 **Last Updated:** February 2025
 
 ---
@@ -11,47 +11,101 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Development Environment Setup](#development-environment-setup)
-3. [Week-by-Week Plan](#week-by-week-plan)
-4. [Implementation Guidelines](#implementation-guidelines)
-5. [Testing Strategy](#testing-strategy)
-6. [Deployment Process](#deployment-process)
-7. [Quality Checklist](#quality-checklist)
+2. [Current State Assessment](#current-state-assessment)
+3. [Development Environment](#development-environment)
+4. [Enhancement Roadmap](#enhancement-roadmap)
+5. [Implementation Guidelines](#implementation-guidelines)
+6. [Testing Strategy](#testing-strategy)
+7. [Deployment Strategy](#deployment-strategy)
+8. [Maintenance & Support](#maintenance--support)
 
 ---
 
 ## Overview
 
-This development plan outlines the step-by-step implementation approach for building the Plumbing Fixture Identifier MVP using a one developer + GitHub Copilot team. The plan follows Clean Architecture principles and prioritizes rapid iteration with continuous testing.
+This development plan outlines the ongoing development approach for the Plumbing Bidding Tool using a one developer + GitHub Copilot team. The application follows Clean Architecture principles and is built with Blazor Server on .NET 8.
 
 ### Development Philosophy
-- **Clean Architecture First:** Build proper separation of concerns from day one
-- **Test-Driven Development:** Write tests alongside implementation
-- **Incremental Delivery:** Deploy and test each component as it's completed
-- **Copilot Integration:** Use GitHub Copilot for boilerplate, tests, and standard patterns
-- **Fail Fast:** Test with real services early to catch integration issues
+- **Clean Architecture:** Maintain strict separation of concerns across layers
+- **Incremental Delivery:** Add features in small, tested increments
+- **User-Centered:** Prioritize features that save time and reduce errors
+- **Quality First:** Automated testing and code review before deployment
+- **Copilot Integration:** Leverage AI assistance for boilerplate, tests, and patterns
 
 ---
 
-## Development Environment Setup
+## Current State Assessment
+
+### What's Working (MVP Foundation ✅)
+
+#### Domain Layer
+- ✅ Core entities: Job, Contractor, FixtureItem, BidItem, JobOption, JobFixtureItem
+- ✅ Enumerations: Phase, ItemType, JobStatus
+- ✅ Relationships properly modeled
+- ✅ Value calculations in domain (TotalCost, fixture prices)
+
+#### Application Layer
+- ✅ Service classes for all main entities
+- ✅ JobService with complete CRUD operations
+- ✅ ContractorService for contractor management
+- ✅ BidItemService for item management
+- ✅ FixtureItemService for fixture management
+- ✅ Repository interfaces defined
+
+#### Infrastructure Layer
+- ✅ Entity Framework Core with SQLite
+- ✅ ApplicationDbContext configured
+- ✅ Repository implementations for all entities
+- ✅ Entity configurations for relationships
+- ✅ Database migrations working
+- ✅ Connection string management
+
+#### Web Layer (Blazor)
+- ✅ Interactive Server rendering mode
+- ✅ Main layout with navigation
+- ✅ Job pages (Index, Create, Edit, Details)
+- ✅ Contractor pages (Index)
+- ✅ BidItems pages (Index)
+- ✅ FixtureItems pages (Index)
+- ✅ Real-time calculation updates
+- ✅ Form validation
+
+### Known Gaps & Improvement Areas
+
+#### Features
+- ⚠️ No PDF/Excel export for bids
+- ⚠️ Limited search and filtering
+- ⚠️ No job cloning capability
+- ⚠️ Settings page incomplete
+- ⚠️ No user authentication
+- ⚠️ No data backup/export tools
+
+#### Technical Debt
+- ⚠️ Limited unit test coverage
+- ⚠️ No integration tests
+- ⚠️ Error handling could be more comprehensive
+- ⚠️ No logging framework implemented
+- ⚠️ SQLite not ideal for production multi-user scenarios
+
+#### User Experience
+- ⚠️ Could benefit from better loading indicators
+- ⚠️ No keyboard shortcuts
+- ⚠️ Mobile experience could be optimized
+- ⚠️ No inline help or tooltips
+
+---
+
+## Development Environment
 
 ### Prerequisites
 
 1. **Development Tools**
-   - Visual Studio 2022 or VS Code with C# extensions
+   - Visual Studio 2022 or VS Code with C# Dev Kit
    - .NET 8 SDK
    - Git
-   - Postman or similar API testing tool
-   - Azure Storage Explorer (for local testing)
-   - Azure Functions Core Tools v4
+   - SQL Server Management Studio (optional, for future migration)
 
-2. **Cloud Accounts & Services**
-   - Azure subscription (free tier sufficient for testing)
-   - Twilio account with phone number purchased
-   - QuickBooks Online Developer account
-   - GitHub account (for version control and Copilot)
-
-3. **Local Configuration**
+2. **Installation & Setup**
    ```bash
    # Clone the repository
    git clone https://github.com/MasterSkriptor/PlumbingBiddingTool.git
@@ -63,690 +117,945 @@ This development plan outlines the step-by-step implementation approach for buil
    # Build solution
    dotnet build
    
-   # Run tests
-   dotnet test
+   # Run database migrations
+   cd src/PlumbingBiddingTool.Web
+   dotnet ef database update
+   
+   # Run the application
+   dotnet run
    ```
 
-4. **Create local.settings.json**
-   ```json
-   {
-     "IsEncrypted": false,
-     "Values": {
-       "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-       "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-       "TwilioAccountSid": "your-twilio-sid",
-       "TwilioAuthToken": "your-twilio-token",
-       "TwilioPhoneNumber": "+1xxxxxxxxxx",
-       "AzureCustomVisionPredictionKey": "your-prediction-key",
-       "AzureCustomVisionPredictionEndpoint": "your-endpoint",
-       "AzureCustomVisionProjectId": "your-project-id",
-       "QuickBooksClientId": "your-client-id",
-       "QuickBooksClientSecret": "your-client-secret",
-       "QuickBooksEnvironment": "sandbox",
-       "QueryPriceUsd": "0.75"
-     }
-   }
+3. **Database Location**
+   - SQLite database: `src/PlumbingBiddingTool.Infrastructure/plumbingbidding.db`
+   - Configured in `Program.cs` with fallback to Infrastructure folder
+
+4. **Project Structure**
+   ```
+   PlumbingBiddingTool/
+   ├── src/
+   │   ├── PlumbingBiddingTool.Domain/
+   │   │   ├── Entities/
+   │   │   └── Repositories/ (interfaces)
+   │   ├── PlumbingBiddingTool.Application/
+   │   │   ├── BidItems/
+   │   │   ├── FixtureItems/
+   │   │   ├── Contractors/
+   │   │   └── Jobs/
+   │   ├── PlumbingBiddingTool.Infrastructure/
+   │   │   ├── Data/
+   │   │   ├── Repositories/
+   │   │   ├── Config/
+   │   │   └── Migrations/
+   │   └── PlumbingBiddingTool.Web/
+   │       ├── Components/
+   │       │   ├── Layout/
+   │       │   └── Pages/
+   │       └── wwwroot/
+   └── tests/
+       ├── PlumbingBiddingTool.Domain.Tests/
+       ├── PlumbingBiddingTool.Application.Tests/
+       └── PlumbingBiddingTool.Infrastructure.Tests/
    ```
 
 ---
 
-## Week-by-Week Plan
+## Enhancement Roadmap
 
-### Week 1: Foundation & Project Setup
+### Phase 1: Core Improvements (Weeks 1-4)
 
-**Goal:** Establish clean architecture structure and basic Twilio integration
+#### Week 1: Testing Foundation
+**Goal:** Establish comprehensive test coverage for critical paths
 
-#### Day 1-2: Project Structure & Domain Layer
-- [ ] **Task 1.1:** Verify existing clean architecture structure
-  - Review Domain, Application, Infrastructure, Web layers
-  - Ensure proper dependency flow (Domain ← Application ← Infrastructure ← Web/Functions)
-  
-- [ ] **Task 1.2:** Define Domain Entities
+- [ ] **Task 1.1:** Set up xUnit test projects (already exist, verify configuration)
+- [ ] **Task 1.2:** Add unit tests for Domain entities
   ```
-  Create domain entities in PlumbingBiddingTool.Domain:
-  - FixtureIdentification (Id, PhoneNumber, ImageUrl, Manufacturer, Model, Confidence, Timestamp)
-  - Customer (Id, PhoneNumber, Name, QuickBooksId)
-  - Invoice (Id, CustomerId, Amount, QueryId, Status, InvoiceDate)
+  Tests for:
+  - Job.TotalCost calculation
+  - FixtureItem.Price calculation
+  - Phase and ItemType enumerations
+  - JobStatus state transitions
   ```
-  - **Copilot Prompt:** "Generate domain entities for fixture identification service with manufacturer, model, and confidence score"
-  
-- [ ] **Task 1.3:** Define Value Objects
-  ```
-  - PhoneNumber (with validation)
-  - Money (with currency support)
-  - Confidence (0.0 to 1.0 range)
-  ```
+  - **Copilot Prompt:** "Generate xUnit tests for Job entity TotalCost calculation with fixtures and options"
 
-- [ ] **Task 1.4:** Write Domain Unit Tests
-  - Test entity validation logic
-  - Test value object constraints
-  - **Copilot Prompt:** "Generate xUnit tests for PhoneNumber value object validation"
-
-#### Day 3-4: Application Layer & Use Cases
-- [ ] **Task 1.5:** Define Application Interfaces (Ports)
+- [ ] **Task 1.3:** Add unit tests for Application services
   ```
-  Create interfaces in PlumbingBiddingTool.Application.Contracts:
-  - IMessagingService (SendSms, ReceiveMms)
-  - IImageRecognitionService (IdentifyFixture)
-  - IBillingService (CreateInvoice, GetOrCreateCustomer)
-  - IFixtureRepository (Save, GetById, GetByPhoneNumber)
+  Tests for:
+  - JobService.CreateJobAsync
+  - JobService.UpdateJobAsync
+  - BidItemService CRUD operations
+  - ContractorService operations
+  ```
+  - **Copilot Prompt:** "Generate xUnit tests for JobService with mocked repositories"
+
+- [ ] **Task 1.4:** Add integration tests for database operations
+  ```
+  Tests for:
+  - Repository CRUD operations
+  - Entity Framework relationships
+  - Migration scenarios
   ```
 
-- [ ] **Task 1.6:** Implement Use Cases
-  ```
-  Create use cases in PlumbingBiddingTool.Application.UseCases:
-  - ProcessFixtureIdentificationRequest
-    - Input: PhoneNumber, ImageUrl
-    - Output: FixtureIdentification result
-    - Steps: Validate → Identify → Respond → Bill
-  ```
-  - **Copilot Prompt:** "Generate use case for processing fixture identification with image recognition and billing"
+- [ ] **Task 1.5:** Set up test data seeding helpers
+  - Create test fixture builders
+  - Mock data generators
 
-- [ ] **Task 1.7:** Add Application Layer Tests
-  - Mock all dependencies
-  - Test happy path and error scenarios
-  - Test confidence threshold logic (>0.8 = success, <0.8 = retry message)
+**Deliverables:** 60%+ code coverage on Domain and Application layers
 
-#### Day 5-7: Twilio Integration & Basic Function
-- [ ] **Task 1.8:** Implement Twilio Service
-  ```
-  In PlumbingBiddingTool.Infrastructure.Messaging:
-  - TwilioService : IMessagingService
-  - Send SMS (use Twilio .NET SDK)
-  - Parse MMS webhook payload
-  - Extract image URL from webhook
-  ```
-  - **Copilot Prompt:** "Implement Twilio service for sending SMS and receiving MMS webhooks"
+#### Week 2: User Experience Enhancements
+**Goal:** Improve usability and add frequently requested features
 
-- [ ] **Task 1.9:** Create Azure Function for Webhook
+- [ ] **Task 2.1:** Implement job cloning
   ```
-  Create in PlumbingBiddingTool.Functions:
-  - TwilioWebhookFunction [HttpTrigger]
-  - Accept POST from Twilio
-  - Parse form data
-  - Call ProcessFixtureIdentificationRequest use case
-  - Return HTTP 200
+  In JobService:
+  - CloneJobAsync(int jobId, string newJobName)
+  - Copy all fixtures and options
+  - Reset status to Open
+  ```
+  - **Copilot Prompt:** "Implement job cloning method that duplicates all fixtures and options"
+
+- [ ] **Task 2.2:** Add search and filtering to Jobs page
+  ```
+  - Filter by contractor
+  - Filter by status
+  - Search by job name
+  - Sort by date, cost, status
   ```
 
-- [ ] **Task 1.10:** Local Testing Setup
-  - Use ngrok to expose local endpoint
-  - Configure Twilio webhook to ngrok URL
-  - Send test MMS and verify reception
-  - Verify SMS response (mock AI for now)
-
-**Week 1 Deliverables:**
-- ✅ Clean architecture structure implemented
-- ✅ Domain and Application layers complete with tests
-- ✅ Twilio service functional
-- ✅ Azure Function receives MMS webhooks
-- ✅ Can send SMS responses
-- ✅ All tests passing
-
----
-
-### Week 2: Azure Custom Vision Integration
-
-**Goal:** Implement AI image recognition capability
-
-#### Day 8-9: Azure Custom Vision Setup
-- [ ] **Task 2.1:** Prepare Training Dataset
-  - Collect 200-500 images of common plumbing fixtures
-  - Organize by manufacturer and model
-  - Target brands: Kohler, American Standard, Delta, Moen, Mansfield, etc.
-  - Ensure variety: different angles, lighting conditions
-
-- [ ] **Task 2.2:** Create Azure Custom Vision Project
-  - Create new project in Azure portal (Object Detection or Classification)
-  - Upload and tag training images
-  - Tag format: "Manufacturer - Model" (e.g., "Kohler - Wellworth K-3987")
-  - Train initial model (can take 10-30 minutes)
-
-- [ ] **Task 2.3:** Test Model Accuracy
-  - Test with validation images (separate from training set)
-  - Verify confidence scores
-  - Iterate on tagging if accuracy <80%
-
-#### Day 10-12: Custom Vision Integration
-- [ ] **Task 2.4:** Implement Custom Vision Service
+- [ ] **Task 2.3:** Improve loading states
   ```
-  In PlumbingBiddingTool.Infrastructure.AI:
-  - AzureCustomVisionService : IImageRecognitionService
-  - Download image from URL
-  - Call Custom Vision Prediction API
-  - Parse response (manufacturer, model, confidence)
-  - Handle low confidence scenarios
-  ```
-  - **Copilot Prompt:** "Implement Azure Custom Vision service to identify plumbing fixtures from images"
-
-- [ ] **Task 2.5:** Add Response Formatting
-  ```
-  Create SMS response templates:
-  - High confidence: "Identified: {Manufacturer} {Model}. Invoice sent to your QuickBooks."
-  - Low confidence: "Unable to identify. Please send a clearer, closer photo of the manufacturer label."
-  - Error: "Sorry, we encountered an error. Please try again."
+  - Add loading indicators to all data operations
+  - Implement skeleton screens for lists
+  - Add progress feedback for long operations
   ```
 
-- [ ] **Task 2.6:** Integration Testing
-  - Test with real fixture images
-  - Verify confidence threshold logic
-  - Test edge cases (no fixture, multiple fixtures, blurry images)
-  - Measure response time (should be <10 seconds)
-
-#### Day 13-14: Performance & Reliability
-- [ ] **Task 2.7:** Add Image Preprocessing (if needed)
-  - Resize large images to reduce processing time
-  - Basic quality checks
-  - Format conversion if necessary
-
-- [ ] **Task 2.8:** Implement Error Handling
-  - Retry logic for transient failures
-  - Graceful degradation on service outage
-  - Log all prediction attempts with confidence scores
-
-- [ ] **Task 2.9:** Add Monitoring
-  - Log to Application Insights
-  - Track identification success rate
-  - Track average confidence scores
-  - Track response times
-
-**Week 2 Deliverables:**
-- ✅ Azure Custom Vision model trained (≥80% accuracy)
-- ✅ Image recognition service implemented
-- ✅ End-to-end flow working: MMS → Identify → SMS response
-- ✅ Proper error handling and logging
-- ✅ Performance meets <10 second target
-
----
-
-### Week 3: QuickBooks Integration
-
-**Goal:** Implement automated billing via QuickBooks Online API
-
-#### Day 15-16: QuickBooks Setup & Authentication
-- [ ] **Task 3.1:** QuickBooks Developer Setup
-  - Create app in Intuit Developer Portal
-  - Configure OAuth 2.0 redirect URLs
-  - Get Client ID and Client Secret
-  - Set up sandbox company for testing
-
-- [ ] **Task 3.2:** Implement OAuth Flow
+- [ ] **Task 2.4:** Add confirmation dialogs
   ```
-  In PlumbingBiddingTool.Infrastructure.Billing:
-  - QuickBooksAuthService
-  - Implement OAuth 2.0 authorization flow
-  - Store/refresh access tokens
-  - Handle token expiration (401 responses)
-  ```
-  - **Copilot Prompt:** "Implement OAuth 2.0 authentication for QuickBooks Online API with token refresh"
-
-- [ ] **Task 3.3:** Create Admin Endpoint for Authorization
-  ```
-  - Create simple endpoint to initiate OAuth
-  - Handle callback and exchange code for tokens
-  - Store tokens securely (for MVP, in configuration; later, Key Vault)
+  - Delete confirmations for jobs, contractors, items
+  - Unsaved changes warnings
+  - Success/error toast notifications
   ```
 
-#### Day 17-19: Customer & Invoice Management
-- [ ] **Task 3.4:** Implement Customer Service
+- [ ] **Task 2.5:** Implement keyboard shortcuts
   ```
-  In PlumbingBiddingTool.Infrastructure.Billing:
-  - QuickBooksCustomerService : IBillingService
-  - GetOrCreateCustomer(phoneNumber)
-    - Search by DisplayName or phone
-    - Create if not exists
-    - Return QuickBooks Customer ID
-  ```
-  - **Copilot Prompt:** "Implement QuickBooks customer creation and lookup by phone number using Intuit SDK"
-
-- [ ] **Task 3.5:** Implement Invoice Generation
-  ```
-  - CreateInvoice(customerId, amount, description)
-    - Create invoice with line item for fixture identification
-    - Set amount to $0.75
-    - Set due date (e.g., Net 15)
-    - Save invoice
-    - Return invoice number
+  - Ctrl+N: New job
+  - Ctrl+S: Save
+  - Ctrl+F: Search
+  - Esc: Cancel/close
   ```
 
-- [ ] **Task 3.6:** Integration Testing
-  - Test full customer creation flow in sandbox
-  - Verify invoice appears in QuickBooks sandbox
-  - Test duplicate customer handling
-  - Test error scenarios (invalid customer, API limits)
+**Deliverables:** Enhanced UX with search, cloning, and better feedback
 
-#### Day 20-21: End-to-End Testing
-- [ ] **Task 3.7:** Complete Integration Test
-  ```
-  Full flow test:
-  1. Send MMS with fixture photo
-  2. Verify image recognition
-  3. Verify SMS response
-  4. Verify customer created in QuickBooks
-  5. Verify invoice generated
-  6. Check all logs and metrics
-  ```
+#### Week 3: Reporting & Export
+**Goal:** Enable users to export and analyze bid data
 
-- [ ] **Task 3.8:** Idempotency Implementation
-  - Ensure duplicate MMS doesn't create duplicate invoices
-  - Track processed queries in repository
-  - Add duplicate detection logic
-
-- [ ] **Task 3.9:** Cost Validation
-  - Calculate actual cost per query:
-    - Twilio MMS receive: ~$0.005
-    - Twilio SMS send: ~$0.0075
-    - Azure Custom Vision: ~$0.001 per prediction
-    - QuickBooks API: Free tier sufficient
-    - Total: ~$0.014 per query (well under $0.20 target)
-
-**Week 3 Deliverables:**
-- ✅ QuickBooks OAuth working
-- ✅ Customer creation/lookup functional
-- ✅ Invoice generation working
-- ✅ End-to-end flow complete and tested
-- ✅ Idempotency implemented
-- ✅ Cost per query validated
-
----
-
-### Week 4: Deployment & Testing
-
-**Goal:** Deploy to Azure and validate with real usage
-
-#### Day 22-23: Azure Deployment
-- [ ] **Task 4.1:** Prepare for Deployment
-  - Review all configuration settings
-  - Ensure all secrets are externalized
-  - Create Azure resources:
-    - Function App (Consumption plan)
-    - Application Insights
-    - Storage Account (for function state)
-
-- [ ] **Task 4.2:** Deploy to Azure
+- [ ] **Task 3.1:** Install PDF generation library
   ```bash
-  # Using Azure CLI or VS publish
-  func azure functionapp publish PlumbingFixtureIdentifier
+  dotnet add package QuestPDF
   ```
-  - Verify Function App is running
-  - Configure application settings (copy from local.settings.json)
-  - Test with Azure endpoint
+  - Evaluate QuestPDF for clean, code-based PDF generation
 
-- [ ] **Task 4.3:** Configure Twilio Webhook
-  - Update Twilio webhook URL to Azure endpoint
-  - Test MMS reception on Azure
-  - Verify SMS responses working
+- [ ] **Task 3.2:** Create BidPdfGenerator service
+  ```
+  In PlumbingBiddingTool.Application.Jobs:
+  - IBidPdfGenerator interface
+  - BidPdfGenerator implementation
+  - Generate professional bid documents
+  - Include contractor info, fixtures, options, totals
+  - Add company branding (logo, colors)
+  ```
+  - **Copilot Prompt:** "Create PDF generator service for job bids with QuestPDF including fixtures table and totals"
 
-#### Day 24-25: Domain Configuration & Testing
-- [ ] **Task 4.4:** DNS Configuration
-  - Configure api.excels.com in Network Solutions
-  - Create CNAME to Azure Function App
-  - Wait for DNS propagation
-  - Test with custom domain
+- [ ] **Task 3.3:** Add PDF download to Job Details page
+  ```
+  - Add "Download PDF" button
+  - Generate PDF on-demand
+  - Return as file download
+  ```
 
-- [ ] **Task 4.5:** Production QuickBooks Setup
-  - Switch from sandbox to production environment
-  - Re-authenticate with production QuickBooks company
-  - Create test invoice to verify
+- [ ] **Task 3.4:** Create Excel export for job lists
+  ```
+  - Install ClosedXML or EPPlus
+  - Export jobs to Excel with all details
+  - Include summary sheet with totals
+  ```
 
-- [ ] **Task 4.6:** End-to-End Production Test
-  - Send real MMS from actual phone
-  - Verify complete flow in production
-  - Check Application Insights for telemetry
-  - Verify invoice in production QuickBooks
+- [ ] **Task 3.5:** Add cost breakdown reports
+  ```
+  - Report by phase (Underground, Stack Out, Trim)
+  - Report by item type (Sewer, Water, Gas)
+  - Visual charts if possible (Chart.js integration)
+  ```
 
-#### Day 26-28: User Testing & Iteration
-- [ ] **Task 4.7:** Internal Testing
-  - Test with 10-20 different fixture images
-  - Document identification accuracy
-  - Track response times
-  - Note any failures or issues
+**Deliverables:** PDF bid export and Excel reporting
 
-- [ ] **Task 4.8:** Address Issues
-  - Fix any bugs discovered
-  - Retrain AI model if accuracy is low
-  - Optimize response messages
-  - Improve error handling based on real scenarios
+#### Week 4: Data Management & Settings
+**Goal:** Improve data integrity and configurability
 
-- [ ] **Task 4.9:** Documentation
-  - Create user guide (how to use the service)
-  - Document setup/deployment process
-  - Create troubleshooting guide
-  - Document architecture decisions
+- [ ] **Task 4.1:** Implement Settings page
+  ```
+  Settings to include:
+  - Company information (name, logo, contact)
+  - Default pricing markup %
+  - Tax rate configuration
+  - Bid template defaults
+  ```
 
-**Week 4 Deliverables:**
-- ✅ Application deployed to Azure
-- ✅ Custom domain configured
-- ✅ Production QuickBooks integrated
-- ✅ 10+ successful end-to-end tests
-- ✅ Documentation complete
-- ✅ Ready for beta users
+- [ ] **Task 4.2:** Add bulk import for bid items
+  ```
+  - CSV upload for bid items
+  - Validation and error reporting
+  - Preview before import
+  ```
+
+- [ ] **Task 4.3:** Implement data validation
+  ```
+  - Price validation (must be > 0)
+  - Quantity validation (must be > 0)
+  - Name uniqueness checks
+  - Required field validation
+  ```
+
+- [ ] **Task 4.4:** Add data backup/export
+  ```
+  - Export entire database to JSON
+  - Import from backup
+  - Scheduled backups (if deployed)
+  ```
+
+- [ ] **Task 4.5:** Implement soft delete
+  ```
+  - Add IsDeleted flag to entities
+  - Filter out deleted items from queries
+  - Add "restore" functionality
+  - Permanent delete after X days
+  ```
+
+**Deliverables:** Settings management and data tools
 
 ---
 
-### Week 5-6: Beta Testing & Refinement
+### Phase 2: Advanced Features (Weeks 5-8)
 
-**Goal:** Validate with real plumbers and iterate based on feedback
+#### Week 5: Database Migration & Multi-User Prep
+**Goal:** Prepare for production deployment
 
-#### Week 5: Beta User Testing
-- [ ] **Task 5.1:** Recruit Beta Testers
-  - Reach out to 5-10 local plumbers
-  - Provide clear instructions
-  - Set expectations (MVP, may have issues)
+- [ ] **Task 5.1:** Migrate to SQL Server or PostgreSQL
+  ```
+  - Install appropriate EF provider
+  - Update connection string configuration
+  - Test all migrations
+  - Verify performance
+  ```
+  - **Copilot Prompt:** "Update ApplicationDbContext to support SQL Server with connection string from configuration"
 
-- [ ] **Task 5.2:** Monitor Usage
-  - Watch Application Insights in real-time
-  - Track key metrics:
-    - Queries per day
-    - Identification success rate
-    - Average confidence score
-    - Response time
-    - Billing success rate
+- [ ] **Task 5.2:** Implement database seeding
+  ```
+  - Create initial fixture library
+  - Seed common bid items
+  - Sample contractors for demo
+  ```
 
-- [ ] **Task 5.3:** Collect Feedback
-  - Follow up with each beta user
-  - Ask about:
-    - Ease of use
-    - Accuracy of results
-    - Response time
-    - Value proposition
-    - Price point
+- [ ] **Task 5.3:** Add logging framework
+  ```
+  - Install Serilog
+  - Configure file and console logging
+  - Add structured logging to all services
+  - Log errors, warnings, and important events
+  ```
 
-- [ ] **Task 5.4:** Analyze Failures
-  - Review all low-confidence identifications
-  - Collect failed images
-  - Identify patterns (lighting, angle, fixture types)
+- [ ] **Task 5.4:** Implement error handling middleware
+  ```
+  - Global exception handler
+  - User-friendly error pages
+  - Error logging and monitoring
+  ```
 
-#### Week 6: Iteration & Polish
-- [ ] **Task 6.1:** Model Improvement
-  - Add failed images to training set
-  - Retrain Custom Vision model
-  - Deploy updated model
-  - Retest with previous failures
+#### Week 6: Authentication & Authorization
+**Goal:** Add user management and security
 
-- [ ] **Task 6.2:** UX Improvements
-  - Refine SMS response messages based on feedback
-  - Add helpful tips (e.g., "For best results, photo the manufacturer label directly")
-  - Consider welcome message for first-time users
+- [ ] **Task 6.1:** Implement ASP.NET Core Identity
+  ```
+  - Install Identity packages
+  - Add ApplicationUser entity
+  - Configure authentication in Program.cs
+  - Add login/logout pages
+  ```
+  - **Copilot Prompt:** "Implement ASP.NET Core Identity with Blazor Server including login and registration pages"
 
-- [ ] **Task 6.3:** Performance Optimization
-  - Optimize image download/processing
-  - Implement caching if applicable
-  - Review and optimize API calls
+- [ ] **Task 6.2:** Add role-based authorization
+  ```
+  Roles:
+  - Admin: Full access
+  - Estimator: Create/edit jobs and items
+  - Viewer: Read-only access
+  ```
 
-- [ ] **Task 6.4:** Launch Preparation
-  - Final security review
-  - Verify all error handling
-  - Confirm cost projections
-  - Prepare launch communication
-  - Set up monitoring alerts
+- [ ] **Task 6.3:** Update entities with user tracking
+  ```
+  - Add CreatedBy, ModifiedBy fields
+  - Track creation and modification dates
+  - Audit trail for important changes
+  ```
 
-**Week 5-6 Deliverables:**
-- ✅ 50-100 real queries processed
-- ✅ ≥80% identification accuracy achieved
-- ✅ User feedback collected and analyzed
-- ✅ Major issues resolved
-- ✅ Ready for broader launch
+- [ ] **Task 6.4:** Implement multi-tenancy prep
+  ```
+  - Add CompanyId to entities if needed
+  - Filter queries by user's company
+  - Ensure data isolation
+  ```
+
+#### Week 7: Analytics & Reporting
+**Goal:** Provide business insights
+
+- [ ] **Task 7.1:** Create analytics dashboard
+  ```
+  Metrics:
+  - Total bids this month
+  - Average bid amount
+  - Bids by status
+  - Top contractors by volume
+  - Cost breakdown by phase
+  ```
+
+- [ ] **Task 7.2:** Implement bid history tracking
+  ```
+  - Track bid versions
+  - Show changes over time
+  - Compare original vs current pricing
+  ```
+
+- [ ] **Task 7.3:** Add won/lost tracking
+  ```
+  - Add WonLostStatus to Job
+  - Track reasons (price, timeline, other)
+  - Calculate win rate
+  - Analyze lost bid patterns
+  ```
+
+- [ ] **Task 7.4:** Create pricing analysis reports
+  ```
+  - Historical pricing trends
+  - Most/least profitable jobs
+  - Fixture usage frequency
+  - Price variance analysis
+  ```
+
+#### Week 8: Polish & Performance
+**Goal:** Optimize and refine
+
+- [ ] **Task 8.1:** Performance optimization
+  ```
+  - Add database indexes
+  - Optimize EF queries (Include vs Select)
+  - Implement query result caching
+  - Pagination for large lists
+  ```
+
+- [ ] **Task 8.2:** UI/UX improvements
+  ```
+  - Consistent styling across all pages
+  - Improved mobile responsive design
+  - Accessibility improvements (ARIA labels, keyboard nav)
+  - Add help tooltips and inline guidance
+  ```
+
+- [ ] **Task 8.3:** Code cleanup
+  ```
+  - Remove commented code
+  - Consolidate duplicate logic
+  - Improve naming consistency
+  - Add XML documentation
+  ```
+
+- [ ] **Task 8.4:** Security hardening
+  ```
+  - SQL injection protection (EF handles)
+  - XSS prevention
+  - CSRF protection (built-in Blazor)
+  - Input sanitization
+  - Secure headers configuration
+  ```
+
+---
+
+### Phase 3: Integration & Scale (Weeks 9-12)
+
+#### Week 9-10: QuickBooks Integration (Optional)
+**Goal:** Automate invoicing and accounting
+
+- [ ] **Task 9.1:** QuickBooks OAuth setup
+  ```
+  - Register app in Intuit Developer Portal
+  - Implement OAuth 2.0 flow
+  - Store and refresh tokens
+  ```
+
+- [ ] **Task 9.2:** Customer sync
+  ```
+  - Map Contractors to QB Customers
+  - Sync contact information
+  - Handle updates bidirectionally
+  ```
+
+- [ ] **Task 9.3:** Invoice generation
+  ```
+  - Create QB invoice from Job
+  - Map line items appropriately
+  - Send invoice automatically
+  ```
+
+#### Week 11: API Development
+**Goal:** Enable third-party integrations
+
+- [ ] **Task 11.1:** Design REST API
+  ```
+  Endpoints:
+  - GET/POST/PUT/DELETE for all entities
+  - Bulk operations
+  - Search and filtering
+  - Pagination support
+  ```
+
+- [ ] **Task 11.2:** Implement API controllers
+  ```
+  - Separate API project or controllers
+  - DTO mapping (AutoMapper)
+  - API versioning
+  - Rate limiting
+  ```
+
+- [ ] **Task 11.3:** Add API documentation
+  ```
+  - Swagger/OpenAPI
+  - Example requests/responses
+  - Authentication documentation
+  ```
+
+#### Week 12: Deployment & DevOps
+**Goal:** Production-ready deployment
+
+- [ ] **Task 12.1:** Containerize application
+  ```
+  - Create Dockerfile
+  - Docker Compose for development
+  - Optimize image size
+  ```
+
+- [ ] **Task 12.2:** Set up CI/CD
+  ```
+  - GitHub Actions or Azure DevOps
+  - Automated build and test
+  - Automated deployment to staging
+  - Manual approval for production
+  ```
+
+- [ ] **Task 12.3:** Cloud deployment
+  ```
+  Options:
+  - Azure App Service
+  - AWS Elastic Beanstalk
+  - Digital Ocean
+  - Self-hosted VPS
+  ```
+
+- [ ] **Task 12.4:** Monitoring and observability
+  ```
+  - Application Insights or similar
+  - Health checks
+  - Uptime monitoring
+  - Performance metrics
+  - Error tracking
+  ```
 
 ---
 
 ## Implementation Guidelines
 
-### Clean Architecture Principles
+### Clean Architecture Best Practices
 
-```
-PlumbingBiddingTool/
-├── src/
-│   ├── PlumbingBiddingTool.Domain/
-│   │   ├── Entities/
-│   │   │   ├── FixtureIdentification.cs
-│   │   │   ├── Customer.cs
-│   │   │   └── Invoice.cs
-│   │   ├── ValueObjects/
-│   │   │   ├── PhoneNumber.cs
-│   │   │   ├── Money.cs
-│   │   │   └── Confidence.cs
-│   │   └── Exceptions/
-│   │       └── DomainException.cs
-│   │
-│   ├── PlumbingBiddingTool.Application/
-│   │   ├── Contracts/
-│   │   │   ├── IMessagingService.cs
-│   │   │   ├── IImageRecognitionService.cs
-│   │   │   ├── IBillingService.cs
-│   │   │   └── IFixtureRepository.cs
-│   │   ├── UseCases/
-│   │   │   ├── ProcessFixtureIdentificationRequest.cs
-│   │   │   └── GetFixtureIdentificationHistory.cs
-│   │   ├── DTOs/
-│   │   │   ├── FixtureIdentificationRequest.cs
-│   │   │   └── FixtureIdentificationResponse.cs
-│   │   └── Exceptions/
-│   │       └── ApplicationException.cs
-│   │
-│   ├── PlumbingBiddingTool.Infrastructure/
-│   │   ├── Messaging/
-│   │   │   └── TwilioService.cs
-│   │   ├── AI/
-│   │   │   └── AzureCustomVisionService.cs
-│   │   ├── Billing/
-│   │   │   ├── QuickBooksAuthService.cs
-│   │   │   └── QuickBooksCustomerService.cs
-│   │   ├── Persistence/
-│   │   │   └── InMemoryFixtureRepository.cs (for MVP)
-│   │   └── Configuration/
-│   │       └── ServiceConfiguration.cs
-│   │
-│   └── PlumbingBiddingTool.Functions/
-│       ├── TwilioWebhookFunction.cs
-│       ├── QuickBooksAuthFunction.cs (for OAuth callback)
-│       ├── host.json
-│       └── local.settings.json
-│
-└── tests/
-    ├── PlumbingBiddingTool.Domain.Tests/
-    ├── PlumbingBiddingTool.Application.Tests/
-    └── PlumbingBiddingTool.Infrastructure.Tests/
-```
+#### Dependency Rules
+1. **Domain** has NO dependencies (pure C#)
+   - Entities
+   - Value Objects
+   - Repository Interfaces
+   - Domain Services (if needed)
 
-### Dependency Rules
-1. **Domain** has no dependencies (pure business logic)
 2. **Application** depends only on Domain
+   - Use Cases / Services
+   - DTOs
+   - Application Interfaces
+
 3. **Infrastructure** depends on Application and Domain
-4. **Functions** depends on all layers (composition root)
+   - Repository Implementations
+   - Database Context
+   - External Service Implementations
+
+4. **Web** depends on all layers (Composition Root)
+   - Blazor Components
+   - Dependency Injection Configuration
+   - Startup/Program Configuration
 
 ### Coding Standards
-- Use C# 12 features where appropriate
-- Follow .NET naming conventions
-- Use dependency injection throughout
-- Implement proper exception handling
-- Add XML documentation for public APIs
-- Use async/await for I/O operations
-- Log all important operations
+
+#### General
+- Use C# 12 language features where appropriate
+- Follow Microsoft naming conventions
+- Async all the way (no sync-over-async)
+- Use nullable reference types
+- Prefer records for DTOs
+
+#### Services
+```csharp
+// Example service pattern
+public class JobService
+{
+    private readonly IJobRepository _repository;
+    private readonly ILogger<JobService> _logger;
+    
+    public JobService(IJobRepository repository, ILogger<JobService> logger)
+    {
+        _repository = repository;
+        _logger = logger;
+    }
+    
+    public async Task<Job> CreateJobAsync(...)
+    {
+        _logger.LogInformation("Creating job {JobName}", jobName);
+        
+        // Validation
+        // Business logic
+        // Save
+        
+        return job;
+    }
+}
+```
+
+#### Blazor Components
+```csharp
+// Example component pattern
+@page "/jobs/create"
+@inject JobService JobService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+@code {
+    private JobModel model = new();
+    private bool isLoading = false;
+    
+    private async Task HandleSubmit()
+    {
+        isLoading = true;
+        try
+        {
+            await JobService.CreateJobAsync(...);
+            Navigation.NavigateTo("/jobs");
+        }
+        catch (Exception ex)
+        {
+            // Error handling
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+```
+
+### Database Patterns
+
+#### Repository Pattern
+```csharp
+public interface IJobRepository
+{
+    Task<Job?> GetByIdAsync(int id);
+    Task<IEnumerable<Job>> GetAllAsync();
+    Task<Job> AddAsync(Job job);
+    Task UpdateAsync(Job job);
+    Task DeleteAsync(int id);
+}
+```
+
+#### Entity Configuration
+```csharp
+public class JobConfiguration : IEntityTypeConfiguration<Job>
+{
+    public void Configure(EntityTypeBuilder<Job> builder)
+    {
+        builder.HasKey(j => j.Id);
+        builder.Property(j => j.JobName).IsRequired().HasMaxLength(200);
+        builder.HasOne(j => j.Contractor)
+               .WithMany(c => c.Jobs)
+               .HasForeignKey(j => j.ContractorId);
+    }
+}
+```
 
 ---
 
 ## Testing Strategy
 
-### Unit Tests (70% coverage target)
-- **Domain Tests:** Entity validation, value object constraints
-- **Application Tests:** Use case logic with mocked dependencies
-- **Infrastructure Tests:** Service implementations with mocked external APIs
+### Unit Testing (Target: 70% Coverage)
 
-### Integration Tests
-- Test with real external services in sandbox/test mode
-- Twilio test credentials
-- QuickBooks sandbox
-- Azure Custom Vision test project
+#### Domain Tests
+```csharp
+public class JobTests
+{
+    [Fact]
+    public void TotalCost_CalculatesCorrectly()
+    {
+        // Arrange
+        var job = new Job
+        {
+            JobFixtureItems = new List<JobFixtureItem>
+            {
+                new() { Price = 100, Quantity = 2 }  // 200
+            },
+            JobOptions = new List<JobOption>
+            {
+                new() { Price = 50, Quantity = 1 }   // 50
+            }
+        };
+        
+        // Act
+        var total = job.TotalCost;
+        
+        // Assert
+        Assert.Equal(250, total);
+    }
+}
+```
 
-### End-to-End Tests
-- Manual testing with real phone and images
-- Automated test suite using Twilio test numbers
-- Verify complete flow: MMS → Recognition → Billing → Response
+#### Application Tests
+```csharp
+public class JobServiceTests
+{
+    [Fact]
+    public async Task CreateJobAsync_CreatesJob()
+    {
+        // Arrange
+        var mockRepo = new Mock<IJobRepository>();
+        var service = new JobService(mockRepo.Object);
+        
+        // Act
+        var result = await service.CreateJobAsync(...);
+        
+        // Assert
+        mockRepo.Verify(r => r.AddAsync(It.IsAny<Job>()), Times.Once);
+    }
+}
+```
 
-### Performance Tests
-- Measure response time under various conditions
-- Test with different image sizes/formats
-- Verify scalability with concurrent requests
+### Integration Testing
+
+#### Database Tests
+```csharp
+public class JobRepositoryTests : IDisposable
+{
+    private readonly ApplicationDbContext _context;
+    
+    public JobRepositoryTests()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        _context = new ApplicationDbContext(options);
+    }
+    
+    [Fact]
+    public async Task AddAsync_AddsJobToDatabase()
+    {
+        // Arrange
+        var repository = new JobRepository(_context);
+        var job = new Job { JobName = "Test" };
+        
+        // Act
+        await repository.AddAsync(job);
+        
+        // Assert
+        Assert.Equal(1, await _context.Jobs.CountAsync());
+    }
+}
+```
+
+### End-to-End Testing
+
+#### Manual Test Scenarios
+1. **Create Complete Bid:**
+   - Create contractor
+   - Create fixtures
+   - Create bid items
+   - Create job with fixtures and options
+   - Verify total calculation
+   - Export to PDF
+
+2. **Edit Existing Bid:**
+   - Open job
+   - Modify quantities
+   - Add/remove options
+   - Verify recalculation
+   - Save changes
+
+3. **Data Management:**
+   - Import bid items from CSV
+   - Clone existing job
+   - Delete and restore items
+   - Export data backup
+
+#### Automated E2E (Future)
+- Playwright or Selenium for UI testing
+- Test critical user journeys
+- Run in CI pipeline
 
 ---
 
-## Deployment Process
+## Deployment Strategy
 
 ### Local Development
 ```bash
-# Start Azure Functions locally
-cd src/PlumbingBiddingTool.Functions
-func start
+# Run locally with SQLite
+cd src/PlumbingBiddingTool.Web
+dotnet run
 
-# In another terminal, use ngrok for Twilio webhook
-ngrok http 7071
+# Access at https://localhost:5001
 ```
 
-### Azure Deployment
+### Staging/Production Deployment
+
+#### Option 1: Azure App Service
 ```bash
-# Deploy using Azure Functions Core Tools
-func azure functionapp publish PlumbingFixtureIdentifier
-
-# Or use CI/CD pipeline in Azure DevOps
-# Configure build and release pipelines
+# Publish to Azure
+dotnet publish -c Release
+# Deploy using Azure CLI or Visual Studio publish
 ```
 
-### Configuration Management
-- **Local:** local.settings.json (not in source control)
-- **Azure:** Application Settings in Function App
-- **Future:** Azure Key Vault for secrets
+#### Option 2: Docker Container
+```dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 80
 
-### Monitoring & Logging
-- **Application Insights:** Automatic telemetry
-- **Custom Logging:** Structured logging with Serilog
-- **Metrics Dashboard:** Track key performance indicators
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet restore
+RUN dotnet build -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "PlumbingBiddingTool.Web.dll"]
+```
+
+#### Configuration Management
+- Development: `appsettings.Development.json`
+- Production: Environment variables or Azure Key Vault
+- Connection strings: Stored securely, never in source control
 
 ---
 
-## Quality Checklist
+## Maintenance & Support
 
-### Before Each Commit
-- [ ] Code compiles without warnings
-- [ ] All unit tests pass
-- [ ] Code follows style guidelines
-- [ ] Changes are minimal and focused
-- [ ] Commit message is clear
+### Regular Maintenance Tasks
 
-### Before Merging to Main
-- [ ] All tests pass (unit + integration)
-- [ ] Code review completed
-- [ ] Documentation updated
-- [ ] No secrets in code
-- [ ] Breaking changes documented
+#### Weekly
+- Review error logs
+- Monitor performance metrics
+- Check for database growth
+- Review user feedback
 
-### Before Deployment
-- [ ] All tests pass in staging
-- [ ] Configuration verified
-- [ ] Monitoring configured
-- [ ] Rollback plan ready
-- [ ] Stakeholders notified
+#### Monthly
+- Update NuGet packages
+- Security scan
+- Backup verification
+- Performance optimization review
 
-### Before Launch
-- [ ] Security review completed
-- [ ] Performance validated
-- [ ] Cost projections confirmed
-- [ ] User documentation ready
-- [ ] Support process defined
+#### Quarterly
+- Major feature releases
+- Pricing library updates
+- User training sessions
+- Roadmap planning
+
+### Monitoring & Alerts
+
+#### Key Metrics to Track
+- Application availability (uptime)
+- Response time (p50, p95, p99)
+- Error rate
+- Active users
+- Database size
+- Number of jobs created per day
+
+#### Alert Thresholds
+- Response time > 3 seconds
+- Error rate > 1%
+- Disk usage > 80%
+- CPU usage > 70% sustained
 
 ---
 
 ## Using GitHub Copilot Effectively
 
 ### Best Practices
-1. **Clear Comments:** Write clear comments describing what you want before code
-2. **Context:** Keep relevant code visible in the editor for better suggestions
-3. **Iterate:** Accept suggestion, then refine with additional comments
-4. **Tests First:** Use Copilot to generate test cases, then implementation
-5. **Patterns:** Let Copilot handle boilerplate and repetitive patterns
 
-### Example Prompts
+#### 1. Context is Key
+- Keep related files open in editor
+- Write clear comments before generating code
+- Use descriptive variable and method names
+
+#### 2. Test-Driven with Copilot
 ```csharp
-// Generate a domain entity for fixture identification with validation
-// Include: PhoneNumber, ImageUrl, Manufacturer, Model, Confidence, Timestamp
-// Add validation for confidence between 0.0 and 1.0
+// Write test first (Copilot helps)
+[Fact]
+public void Job_TotalCost_ShouldIncludeAllItems()
+{
+    // Generate test with Copilot
+}
 
-// Generate xUnit test cases for the FixtureIdentification entity
-// Test: Valid entity creation, Invalid confidence value, Null phone number
-
-// Implement Twilio service to send SMS using Twilio .NET SDK
-// Include error handling and logging
-
-// Create use case to process fixture identification
-// Steps: 1. Validate input, 2. Call image recognition, 3. Check confidence
-// 4. Send SMS response, 5. Create invoice if confidence > 0.8
+// Then implement feature
+public decimal TotalCost => /* Let Copilot suggest */
 ```
 
+#### 3. Effective Prompts
+```csharp
+// ✅ Good: Specific and clear
+// Create a method to calculate job total cost including fixtures and options
+
+// ❌ Poor: Vague
+// Write code for total
+```
+
+#### 4. Boilerplate Generation
+```csharp
+// Create full CRUD repository implementation for Job entity with Entity Framework
+public class JobRepository : IJobRepository
+{
+    // Copilot generates all methods
+}
+```
+
+#### 5. Test Data Generation
+```csharp
+// Generate test data for Job with 5 fixtures and 3 options
+private Job CreateTestJob()
+{
+    // Copilot creates comprehensive test data
+}
+```
+
+### Example Prompts for Common Tasks
+
+#### Creating Entities
+"Create a Job entity with properties: Id, JobName, Status, ContractorId, collections for JobFixtureItems and JobOptions, and a calculated TotalCost property"
+
+#### Creating Services
+"Implement JobService with methods to create, update, delete, and get jobs including all related fixtures and options"
+
+#### Creating Blazor Components
+"Create a Blazor component for creating a new job with contractor selection, fixture selection with quantities, and custom options input"
+
+#### Writing Tests
+"Generate xUnit tests for JobService.CreateJobAsync method covering success case, validation failures, and exception handling"
+
 ---
 
-## Risk Mitigation Strategies
+## Risk Management
 
 ### Technical Risks
-1. **AI Accuracy Below Target**
-   - Mitigation: Start with larger training set, iterate weekly
-   - Fallback: Manual review queue for low confidence results
 
-2. **API Rate Limits**
-   - Mitigation: Implement request throttling and queuing
-   - Monitoring: Track API usage proactively
-
-3. **Cost Overruns**
-   - Mitigation: Set up Azure budget alerts
-   - Monitoring: Weekly cost review
+| Risk | Impact | Mitigation |
+|------|--------|----------|
+| Data loss | High | Regular backups, transaction management |
+| Performance degradation | Medium | Indexing, query optimization, caching |
+| Security vulnerabilities | High | Regular updates, security scanning, code review |
+| Scalability issues | Medium | Database migration to enterprise DB, consider caching |
 
 ### Process Risks
-1. **Scope Creep**
-   - Mitigation: Strict adherence to MVP feature list
-   - Process: Document all "nice to have" features for post-MVP
 
-2. **Time Delays**
-   - Mitigation: Focus on critical path items first
-   - Process: Daily progress review, adjust as needed
-
----
-
-## Post-MVP Roadmap
-
-### Immediate Next Steps (Post-Launch)
-1. Add persistence layer (Azure Cosmos DB or SQL)
-2. Implement user dashboard for query history
-3. Add email notifications as alternative to SMS
-4. Create admin panel for monitoring and support
-
-### Future Enhancements
-1. Mobile app for easier photo submission
-2. Subscription pricing model
-3. Integration with parts suppliers for instant pricing
-4. Expand to other fixture types (HVAC, electrical)
+| Risk | Impact | Mitigation |
+|------|--------|----------|
+| Scope creep | Medium | Stick to roadmap, prioritize ruthlessly |
+| Technical debt accumulation | Medium | Regular refactoring, maintain test coverage |
+| Single developer dependency | High | Good documentation, code clarity |
+| User adoption issues | Medium | Training, user feedback loops |
 
 ---
 
-## Success Metrics & KPIs
+## Success Metrics
 
-Track these metrics weekly:
+### Development KPIs
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Queries per week | 50+ by week 6 | Application Insights |
-| Identification accuracy | ≥80% | Custom logging |
-| Average confidence | ≥0.85 | Custom logging |
-| Response time | <10 sec (95th percentile) | Application Insights |
-| Billing success rate | ≥95% | Custom logging |
-| Cost per query | <$0.20 | Azure Cost Management |
-| User retention | ≥30% repeat | Custom analytics |
+| Metric | Target | How to Measure |
+|--------|--------|---------------|
+| Code coverage | >70% | Test runner reports |
+| Build success rate | >95% | CI/CD metrics |
+| Average bug fix time | <48 hours | Issue tracking |
+| Feature delivery | 80% on-time | Project tracking |
+
+### Application KPIs
+
+| Metric | Target | How to Measure |
+|--------|--------|---------------|
+| Uptime | >99% | Monitoring tools |
+| Response time | <2s (p95) | Application Insights |
+| Jobs created per week | Growth trend | Database analytics |
+| User satisfaction | >4.5/5 | User surveys |
 
 ---
 
-## Contact & Support
+## Resources & References
 
-**Technical Lead:** Harold Collins  
-**Repository:** https://github.com/MasterSkriptor/PlumbingBiddingTool  
-**Documentation:** /Documentation/  
-**Support:** [Add support contact]
+### Documentation
+- [ASP.NET Core Documentation](https://docs.microsoft.com/aspnet/core)
+- [Blazor Documentation](https://docs.microsoft.com/aspnet/core/blazor)
+- [Entity Framework Core](https://docs.microsoft.com/ef/core)
+- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+
+### Libraries to Consider
+- **PDF Generation:** QuestPDF, DinkToPdf
+- **Excel Export:** ClosedXML, EPPlus
+- **Logging:** Serilog
+- **Testing:** xUnit, Moq, FluentAssertions
+- **Mapping:** AutoMapper
+- **Validation:** FluentValidation
+
+---
+
+## Appendix: Quick Reference
+
+### Common Commands
+
+```bash
+# Build
+dotnet build
+
+# Run tests
+dotnet test
+
+# Run app
+cd src/PlumbingBiddingTool.Web
+dotnet run
+
+# Create migration
+dotnet ef migrations add MigrationName
+
+# Update database
+dotnet ef database update
+
+# Add package
+dotnet add package PackageName
+```
+
+### File Locations
+- Domain Entities: `src/PlumbingBiddingTool.Domain/Entities/`
+- Services: `src/PlumbingBiddingTool.Application/`
+- Repositories: `src/PlumbingBiddingTool.Infrastructure/Repositories/`
+- Pages: `src/PlumbingBiddingTool.Web/Components/Pages/`
+- Database: `src/PlumbingBiddingTool.Infrastructure/plumbingbidding.db`
 
 ---
 
@@ -754,4 +1063,4 @@ Track these metrics weekly:
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | February 2025 | Development Team | Initial development plan |
+| 1.0 | February 2025 | Development Team | Initial development plan for Plumbing Bidding Tool |

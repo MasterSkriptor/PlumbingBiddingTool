@@ -1,297 +1,469 @@
 # Product Requirements Document
 
-**Product Name:** Plumbing Fixture Identifier (PFI Service)  
-**Version:** MVP 1.0  
+**Product Name:** Plumbing Bidding Tool  
+**Version:** 1.0  
 **Date:** February 2025  
-**Owner:** Harold Collins  
 **Status:** In Development
 
 ---
 
-## 1. One-Sentence Overview
+## 1. Executive Summary
 
-A serverless SMS-based service that lets plumbers text a photo of a plumbing fixture (faucet, toilet, etc.) → instantly identifies the manufacturer and model using AI → replies with the answer and bills the user via QuickBooks Online.
+### One-Sentence Overview
+A web-based tool that streamlines the plumbing bidding process for new construction projects by allowing contractors to quickly create accurate bids using pre-configured fixture items, bid items, and customizable job options.
+
+### Product Vision
+Simplify and accelerate the plumbing bid creation process for new construction projects, reducing errors and improving profitability for plumbing contractors.
 
 ---
 
-## 2. Problem & Opportunity
+## 2. Problem Statement & Opportunity
 
-### Problem
-Plumbers waste time manually looking up fixture brands/models/parts when on-site or quoting jobs. Existing lookup tools are slow, require apps/websites, or lack accuracy for visual identification.
+### Current Challenges
+- **Manual Bid Creation:** Plumbing contractors spend significant time manually calculating costs for new construction projects
+- **Inconsistent Pricing:** Without a centralized system, pricing can vary across bids leading to profitability issues
+- **Complex Calculations:** Tracking fixtures, bid items across multiple phases (Underground, Stack Out, Trim), and custom options is error-prone
+- **Limited Visibility:** Difficulty tracking multiple jobs and bids for different contractors
+- **Time-Consuming Process:** Creating detailed bids with all components and accurate totals requires extensive manual work
 
 ### Opportunity
-High-accuracy AI image recognition + instant SMS delivery + automated billing creates a fast, frictionless tool that saves time and generates recurring revenue.
+Create a streamlined web application that provides:
+- Pre-configured fixture and bid item libraries
+- Automated cost calculations
+- Multi-phase plumbing project support (Underground, Stack Out, Trim)
+- Job tracking and management
+- Contractor-specific bid organization
 
 ---
 
 ## 3. Target Users
 
 ### Primary Users
-- Independent plumbers
-- Small plumbing companies in the US (starting in Mississippi)
+- **Plumbing Contractors:** Small to medium-sized plumbing companies bidding on new construction residential and commercial projects
+- **Estimators:** Team members responsible for creating bids and quotes
+- **Business Owners:** Plumbing company owners managing multiple contractors and projects
 
-### Pain Points
-- Need quick part identification without leaving the job site
-- Prefer text/SMS over downloading apps
+### User Personas
 
-### Future Expansion
-- Contractors
-- Suppliers
-- DIY users via email/mobile
+**Persona 1: Small Contractor**
+- Runs a 2-5 person plumbing operation
+- Bids on 10-20 residential new construction projects per month
+- Needs quick, accurate bids to remain competitive
+- Values simplicity and ease of use
+
+**Persona 2: Estimator at Medium-Sized Company**
+- Creates 30+ bids per month
+- Manages multiple contractors/builders relationships
+- Requires consistency and accuracy
+- Needs to track bid history and job status
 
 ---
 
 ## 4. Core Value Proposition
 
-> **"Text a photo → Get manufacturer + model in seconds → Pay only for successful answers — all via your existing QuickBooks."**
+> **"Create accurate plumbing bids for new construction in minutes, not hours - with automated calculations, pre-configured items, and organized job tracking."**
+
+### Key Benefits
+1. **Speed:** Reduce bid creation time from hours to minutes
+2. **Accuracy:** Automated calculations eliminate manual errors
+3. **Consistency:** Standardized pricing across all bids
+4. **Organization:** Track all jobs and contractors in one place
+5. **Flexibility:** Support custom job options for unique requirements
 
 ---
 
-## 5. MVP Goals & Success Metrics
+## 5. Product Goals & Success Metrics
 
 ### Business Goals
-- Validate demand with 50–100 real queries in first month
-- Achieve 80–90% identification accuracy on good photos
-- Generate first revenue via QuickBooks invoices
+- Reduce bid creation time by 70%+
+- Improve bid accuracy and reduce pricing errors
+- Support contractors in winning more profitable bids
+- Enable scaling to 100+ active jobs
 
-### Key Metrics
+### Success Metrics
 
-| Metric | Target | Description |
-|--------|--------|-------------|
-| Identification success rate | ≥80% | Confidence threshold >0.8 |
-| End-to-end latency | <10 seconds | MMS receive → SMS reply |
-| Billing success | 95% | Successful QBO invoice creation |
-| Cost per query | <$0.20 | Twilio + Azure AI + QuickBooks fees |
-| User retention | ≥30% | Repeat users in first month |
-
----
-
-## 6. MVP Features & Scope
-
-### Must-Have Features
-
-| # | Feature | Description | Priority | Implementation Notes |
-|---|---------|-------------|----------|---------------------|
-| 1 | MMS Image Reception | Receive photo via Twilio MMS webhook | Must | Phone number purchased; webhook to Azure Function |
-| 2 | AI Fixture Identification | Use Azure Custom Vision to detect manufacturer + model | Must | Train on 200–500 labeled images; threshold 0.8 confidence |
-| 3 | SMS Response | Reply with result or "try clearer photo" | Must | Keep <160 chars; friendly tone |
-| 4 | Per-Query Billing | Create/find QBO customer by phone → generate $0.75 invoice | Must | Use Intuit .NET SDK; sandbox first |
-| 5 | Clean Architecture | Domain / Application / Infrastructure / Functions layers | Must | Enables future email/mobile |
-| 6 | Basic Error Handling | Low confidence → polite retry message; token refresh on 401 | Should | Log failures |
-| 7 | Local + Azure Deployment | Run locally + deploy to Azure Functions | Must | CI/CD via Azure DevOps |
-| 8 | Domain Mapping | api.excels.com points to Azure endpoint | Should | Network Solutions DNS |
-
-### Out of Scope for MVP
-
-- User portal / dashboard
-- Subscriptions (only per-use billing)
-- Email invoice delivery
-- Mobile app submission
-- Refunds / credits system
-- Multi-language support
-- Advanced analytics / reporting
+| Metric | Target | Measurement Method |
+|--------|--------|-------------------|
+| Average bid creation time | <15 minutes | User feedback/analytics |
+| User adoption | 5+ active contractors in first 3 months | Database records |
+| Bids created per month | 50+ bids/month after 3 months | Database records |
+| Calculation accuracy | 100% (vs. manual) | Testing/validation |
+| User satisfaction | 4.5/5 stars | User surveys |
 
 ---
 
-## 7. High-Level Technical Architecture
+## 6. Feature Scope
 
-### Tech Stack
-- **Backend:** .NET 8, Azure Functions (serverless)
-- **SMS/MMS:** Twilio API
-- **AI:** Azure Custom Vision
-- **Billing:** QuickBooks Online API
-- **DevOps:** GitHub, Azure DevOps
-- **Deployment:** Azure Functions with HTTPS
+### Core Features (MVP - Current Implementation)
 
-### Non-Functional Requirements
+#### 6.1 Fixture Item Management
+- **Description:** Pre-configured plumbing fixtures with associated bid items
+- **Capabilities:**
+  - View all fixture items with calculated prices
+  - Each fixture automatically includes its component bid items
+  - Fixture price = sum of all associated bid items
+- **User Story:** "As an estimator, I want to select fixtures (e.g., 'Full Bath') and automatically get all associated components priced correctly"
 
-#### Security
-- HTTPS only for all communications
-- Secrets in local.settings.json → migrate to Azure Key Vault
-- OAuth 2.0 for QuickBooks integration
+#### 6.2 Bid Item Management
+- **Description:** Individual plumbing components with pricing
+- **Capabilities:**
+  - Create, read, update, delete bid items
+  - Categorize by phase (Underground, Stack Out, Trim)
+  - Categorize by type (Sewer, Water, Gas)
+  - Set individual pricing per item
+- **User Story:** "As a business owner, I want to maintain a library of plumbing components with current pricing"
 
-#### Performance
-- Scale to 1,000 queries/month with low cost
-- Sub-10 second response time
-- Efficient image processing
+#### 6.3 Contractor Management
+- **Description:** Track and organize multiple contractor relationships
+- **Capabilities:**
+  - Create and manage contractor profiles
+  - View all jobs associated with each contractor
+  - Track contractor-specific job history
+- **User Story:** "As an estimator, I want to organize my bids by contractor/builder so I can manage multiple relationships"
 
-#### Reliability
-- Idempotent operations
-- Retry logic for transient errors
-- Graceful degradation on service failures
+#### 6.4 Job Creation & Management
+- **Description:** Create detailed plumbing bids for new construction projects
+- **Capabilities:**
+  - Create new jobs linked to contractors
+  - Select fixtures with quantity inputs
+  - Add custom job options (additional items not in fixture library)
+  - Automatic total cost calculation
+  - Job status tracking (Open/In Progress/Completed/Closed)
+  - View job details with complete breakdown
+  - Edit existing jobs
+- **User Story:** "As a contractor, I want to create a bid by selecting fixtures, setting quantities, and adding custom options, then see the total automatically calculated"
 
-#### Cost Target
-- <$50/month at low volume
-- Pay-per-use model for scalability
+#### 6.5 Multi-Phase Support
+- **Description:** Support three phases of plumbing construction
+- **Phases:**
+  - **Underground:** Sewer, water, and gas lines beneath slab
+  - **Stack Out:** Vertical plumbing stacks and rough-in
+  - **Trim:** Fixture installation and finish work
+- **User Story:** "As an estimator, I need to organize my bid items by construction phase to align with how projects are actually built"
+
+#### 6.6 Cost Calculations
+- **Description:** Automatic, accurate bid total calculations
+- **Capabilities:**
+  - Calculate fixture subtotal: Sum of (fixture price × quantity)
+  - Calculate options subtotal: Sum of (option price × quantity)
+  - Calculate job total: Fixtures + Options
+  - Real-time updates as quantities change
+- **User Story:** "As a contractor, I want the total automatically calculated so I can see my bid amount without manual math"
+
+### Out of Scope (Future Enhancements)
+- PDF/Excel export of bids
+- Email bid delivery
+- Customer/client management
+- Profit margin analysis and recommendations
+- Historical pricing trends
+- Material supplier integration
+- Mobile app
+- Multi-user access control
+- Bid versioning
+- Won/Lost bid tracking with reasons
+- Payment tracking
+- Integration with accounting software
 
 ---
 
-## 8. System Architecture
+## 7. Technical Architecture
 
-### Architecture Layers
+### Technology Stack
+- **Frontend:** Blazor Server (.NET 8)
+- **Backend:** ASP.NET Core (.NET 8)
+- **Database:** SQLite (currently), ready for migration to SQL Server/PostgreSQL
+- **Architecture Pattern:** Clean Architecture
+  - **Domain Layer:** Entities, Value Objects, Interfaces
+  - **Application Layer:** Services, Use Cases, Business Logic
+  - **Infrastructure Layer:** Data Access, Repositories, External Services
+  - **Web Layer:** Blazor Components, Pages, UI
 
-```
-┌─────────────────────────────────────┐
-│     Azure Functions (HTTP)          │
-│  - Twilio MMS Webhook Handler       │
-└─────────────────┬───────────────────┘
-                  │
-┌─────────────────▼───────────────────┐
-│      Application Layer              │
-│  - Use Cases                        │
-│  - Business Logic Orchestration     │
-└─────────────────┬───────────────────┘
-                  │
-┌─────────────────▼───────────────────┐
-│        Domain Layer                 │
-│  - Entities (Fixture, Invoice)      │
-│  - Value Objects                    │
-│  - Domain Services                  │
-└─────────────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────┐
-│    Infrastructure Layer             │
-│  - Twilio Service                   │
-│  - Azure Custom Vision Service      │
-│  - QuickBooks Service               │
-└─────────────────────────────────────┘
-```
+### Domain Model
+
+#### Core Entities
+1. **Contractor**
+   - Id, Name
+   - Collection of Jobs
+
+2. **Job**
+   - Id, JobName, Status, ContractorId
+   - Collection of JobFixtureItems
+   - Collection of JobOptions
+   - Calculated TotalCost
+
+3. **FixtureItem**
+   - Id, Name
+   - Collection of BidItems
+   - Calculated Price (sum of bid items)
+
+4. **BidItem**
+   - Id, Name, Price, Phase, ItemType
+
+5. **JobFixtureItem** (Join entity)
+   - JobId, FixtureItemId, Quantity, Price
+
+6. **JobOption** (Custom additions)
+   - JobId, Name, Quantity, Price
+
+#### Enumerations
+- **Phase:** Underground, StackOut, Trim
+- **ItemType:** Sewer, Water, Gas
+- **JobStatus:** Open, InProgress, Completed, Closed
 
 ### Data Flow
-
-1. **User sends MMS** → Twilio receives photo + phone number
-2. **Twilio webhook** → Azure Function receives request
-3. **Image Analysis** → Azure Custom Vision identifies fixture
-4. **Response Generation** → Format manufacturer + model
-5. **SMS Reply** → Send result to user via Twilio
-6. **Billing** → Create/update customer in QuickBooks → Generate invoice
+```
+User → Blazor Component → Application Service → Repository → Database
+                                ↓
+                          Domain Logic & Validation
+```
 
 ---
 
-## 9. Timeline & Milestones
+## 8. User Experience & Workflows
 
-### Rough 4–6 Week Timeline from Start
+### Workflow 1: Creating a New Bid
 
-| Week | Milestone | Key Deliverables |
-|------|-----------|------------------|
-| Week 1 | Project Setup & Foundation | Clean architecture structure, Twilio basics, local dev environment |
-| Week 2 | AI Integration | Azure Custom Vision training + integration, image processing |
-| Week 3 | Billing Integration | QuickBooks OAuth setup, customer management, invoice generation |
-| Week 4 | Testing & Deployment | End-to-end testing, Azure deployment, DNS configuration |
-| Week 5–6 | Beta Testing & Iteration | Real-user testing, accuracy improvements, polish |
+1. **Navigate to Create Job page**
+2. **Select Contractor** from dropdown (or create new)
+3. **Enter Job Name** (e.g., "Lot 42 - Maple Street")
+4. **Select Fixtures:**
+   - Browse fixture list with prices
+   - Enter quantity for each fixture needed
+   - See fixture subtotal update
+5. **Add Custom Job Options** (if needed):
+   - Add name (e.g., "Gas line extension")
+   - Enter quantity and price
+6. **Review Total Cost**
+   - See automatic calculation
+   - Fixtures subtotal + Options subtotal = Total
+7. **Submit Job**
+8. **View Confirmation** with job details
 
----
+### Workflow 2: Managing Fixture Library
 
-## 10. Risks & Mitigations
+1. **Navigate to Fixture Items**
+2. **View All Fixtures** with calculated prices
+3. **Each fixture shows:**
+   - Name
+   - Associated bid items
+   - Total calculated price
+4. **Note:** Fixture management uses the existing bid items
 
-| Risk | Impact | Mitigation Strategy |
-|------|--------|-------------------|
-| AI accuracy too low | High | Start with 50 images per common model; iterate weekly with real failures |
-| OAuth / QuickBooks approval delays | Medium | Build/test fully in sandbox environment first |
-| Twilio MMS costs | Medium | Monitor closely; consider offering first 3 queries free |
-| User adoption | High | Target local Mississippi plumbers via networks/forums |
-| Image quality issues | Medium | Provide clear guidelines; implement preprocessing |
-| API rate limits | Low | Implement proper throttling and caching |
+### Workflow 3: Managing Bid Items
 
----
+1. **Navigate to Bid Items**
+2. **View/Filter** by Phase or ItemType
+3. **Create New Bid Item:**
+   - Enter name
+   - Set price
+   - Select phase
+   - Select type
+4. **Edit Existing Item** to update pricing
+5. **Save Changes**
 
-## 11. User Experience Flow
+### Workflow 4: Reviewing Jobs
 
-### Happy Path
-
-1. User texts photo to dedicated phone number
-2. System receives MMS and processes image
-3. AI identifies fixture with high confidence (>0.8)
-4. User receives SMS: "Identified: Kohler Wellworth K-3987. Invoice sent to your QuickBooks."
-5. QuickBooks invoice created for $0.75
-
-### Low Confidence Path
-
-1. User texts photo to dedicated phone number
-2. System receives MMS and processes image
-3. AI returns low confidence (<0.8)
-4. User receives SMS: "Unable to identify. Please send a clearer, closer photo of the manufacturer label or model number."
-
-### Error Path
-
-1. User texts photo to dedicated phone number
-2. System encounters error (service down, bad image format)
-3. User receives SMS: "Sorry, we encountered an error. Please try again or contact support."
-
----
-
-## 12. Next Actions
-
-### Immediate Priority (Week 1)
-1. ✅ Set up clean architecture project structure
-2. Finalize Azure Custom Vision dataset (collect/upload images)
-3. Implement Twilio MMS webhook handler
-4. Set up development environment with local.settings.json
-
-### Week 2-3
-5. Implement & test QuickBooks billing in sandbox
-6. Integrate Azure Custom Vision API
-7. Build end-to-end test scenarios
-
-### Week 4+
-8. Deploy MVP to Azure
-9. Configure api.excels.com DNS
-10. Run first real MMS tests
-11. Track metrics in Azure Application Insights
+1. **Navigate to Jobs**
+2. **View Jobs List:**
+   - All jobs with contractor, status, total
+   - Filter/search capabilities
+3. **Select Job** to view details:
+   - Complete fixture breakdown
+   - Custom options
+   - Total cost
+4. **Edit Job** if needed
+5. **Update Status** as work progresses
 
 ---
 
-## 13. Success Criteria for MVP Launch
+## 9. User Interface Requirements
 
-- [ ] Successfully receive and process MMS images via Twilio
-- [ ] AI identification accuracy ≥80% on test dataset
-- [ ] Response time <10 seconds for 95% of requests
-- [ ] QuickBooks invoices generated automatically
-- [ ] Successfully process 10 test queries end-to-end
-- [ ] Deploy to Azure with custom domain
-- [ ] Documentation complete for setup and usage
-- [ ] Cost per query <$0.20 validated
+### Design Principles
+- **Clean & Simple:** Minimize clutter, focus on essential information
+- **Responsive:** Work on desktop, tablet, and mobile
+- **Fast:** Quick page loads and responsive interactions
+- **Intuitive:** Follow standard web conventions
+- **Data-Focused:** Present information clearly with good visual hierarchy
+
+### Key UI Components
+1. **Navigation:** Clear menu structure (Jobs, Contractors, Fixtures, Bid Items, Settings)
+2. **Tables:** Sortable, filterable lists for all entities
+3. **Forms:** Simple, validated input forms
+4. **Cards:** Summary cards for displaying grouped information
+5. **Modals:** For confirmations and quick actions
+
+### Color Scheme & Branding
+- Professional appearance suitable for contractors
+- Clear visual feedback for actions
+- Status indicators for job states
 
 ---
 
-## 14. Post-MVP Roadmap (Future Considerations)
+## 10. Non-Functional Requirements
 
-### Phase 2 (3-6 months)
-- User dashboard for query history
-- Email notification option
-- Batch processing capability
-- Enhanced reporting
+### Performance
+- Page load time: <2 seconds
+- Support for 100+ active jobs
+- Concurrent user support: 5-10 simultaneous users
+- Database query optimization for large datasets
 
-### Phase 3 (6-12 months)
-- Mobile app for easier photo submission
-- Subscription plans
-- Multi-language support
-- Integration with parts suppliers
+### Security
+- HTTPS for all communications
+- Input validation and sanitization
+- SQL injection prevention (using Entity Framework parameterized queries)
+- Future: Authentication and authorization
 
-### Phase 4 (12+ months)
-- Expand to other trades (HVAC, electrical)
-- API for third-party integrations
-- Advanced analytics dashboard
-- White-label solution for suppliers
+### Reliability
+- 99% uptime target
+- Automatic database backups
+- Error handling and logging
+- Graceful degradation on failures
+
+### Usability
+- Intuitive interface requiring minimal training
+- Consistent UI patterns throughout
+- Helpful error messages
+- Responsive design for various screen sizes
+
+### Maintainability
+- Clean Architecture for easy updates
+- Well-documented code
+- Separation of concerns
+- Unit test coverage for critical paths
+
+---
+
+## 11. Development Roadmap
+
+### Phase 1: MVP Foundation (Completed)
+- ✅ Clean Architecture structure
+- ✅ Domain entities and relationships
+- ✅ Database context with SQLite
+- ✅ Basic CRUD repositories
+- ✅ Core application services
+- ✅ Blazor components for all main features
+- ✅ Job creation with fixtures and options
+- ✅ Automatic cost calculations
+- ✅ Multi-phase bid item support
+
+### Phase 2: Enhancements (Next 1-3 Months)
+- [ ] PDF bid export
+- [ ] Enhanced search and filtering
+- [ ] Bid templates for common job types
+- [ ] Job cloning/duplication
+- [ ] Improved reporting (cost breakdowns by phase)
+- [ ] Settings page for configuration
+- [ ] Data validation improvements
+- [ ] User testing and feedback incorporation
+
+### Phase 3: Advanced Features (3-6 Months)
+- [ ] Multi-user support with authentication
+- [ ] Role-based access control
+- [ ] Bid versioning and history
+- [ ] Won/Lost tracking with analytics
+- [ ] Email notifications
+- [ ] Migration to SQL Server/PostgreSQL
+- [ ] API for integrations
+- [ ] Mobile app consideration
+
+### Phase 4: Scale & Integration (6-12 Months)
+- [ ] Integration with accounting software (QuickBooks)
+- [ ] Material supplier pricing integration
+- [ ] Advanced analytics and reporting
+- [ ] Profit margin optimization tools
+- [ ] Historical pricing analysis
+- [ ] Market competitive analysis
+
+---
+
+## 12. Risks & Mitigation Strategies
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Incomplete fixture library | Medium | Medium | Start with most common fixtures; add incrementally |
+| Pricing becomes outdated | High | High | Regular pricing review process; bulk update capability |
+| User adoption resistance | Medium | Medium | Focus on ease of use; provide training; show time savings |
+| Performance with large datasets | Medium | Low | Database optimization; implement pagination; indexing |
+| Data loss | High | Low | Regular backups; data export capability |
+| Feature creep | Medium | High | Stick to roadmap; document future features separately |
+
+---
+
+## 13. Success Criteria for Launch
+
+### Must Have
+- [ ] All CRUD operations working for Contractors, Jobs, Fixtures, and Bid Items
+- [ ] Accurate automatic calculations verified
+- [ ] Clean, professional UI
+- [ ] Responsive design working on desktop and tablet
+- [ ] No critical bugs
+- [ ] Basic error handling in place
+- [ ] Database migrations working
+
+### Should Have
+- [ ] User documentation/guide
+- [ ] 20+ fixtures in library
+- [ ] 50+ bid items covering common scenarios
+- [ ] Comprehensive testing of all major workflows
+
+### Nice to Have
+- [ ] PDF export capability
+- [ ] Search functionality
+- [ ] Keyboard shortcuts for power users
+
+---
+
+## 14. Future Considerations
+
+### Scalability
+- Multi-tenant architecture for SaaS offering
+- Cloud deployment (Azure/AWS)
+- Database migration to enterprise solution
+- Performance optimization for 1000+ jobs
+
+### Monetization (if applicable)
+- Subscription model for contractors
+- Per-bid pricing
+- Premium features (advanced reporting, integrations)
+- White-label option for larger companies
+
+### Integration Opportunities
+- Accounting software (QuickBooks, Xero)
+- Material suppliers for real-time pricing
+- Project management tools
+- CRM systems
 
 ---
 
 ## Appendix A: Glossary
 
-- **MMS:** Multimedia Messaging Service - SMS with image/media capability
-- **QBO:** QuickBooks Online
-- **Azure Custom Vision:** Microsoft's custom image classification service
-- **Clean Architecture:** Software design pattern separating concerns into layers
-- **Serverless:** Cloud computing model where provider manages infrastructure
+- **Fixture:** A complete plumbing component (e.g., toilet, sink, bath) that includes multiple bid items
+- **Bid Item:** An individual plumbing component with a specific price (e.g., "2" ABS trap", "Supply stop")
+- **Job:** A complete plumbing bid for a new construction project
+- **Job Option:** Custom line items added to a job that aren't in the fixture library
+- **Phase:** Construction stage (Underground, Stack Out, or Trim)
+- **Contractor:** Builder or general contractor requesting the plumbing bid
+- **Stack Out:** The rough-in phase where vertical plumbing stacks are installed
 
 ---
 
-## Appendix B: References
+## Appendix B: Database Schema Overview
 
-- Twilio MMS Documentation: https://www.twilio.com/docs/sms/tutorials/how-to-receive-and-reply
-- Azure Custom Vision: https://azure.microsoft.com/services/cognitive-services/custom-vision-service/
-- QuickBooks Online API: https://developer.intuit.com/app/developer/qbo/docs/get-started
-- Clean Architecture: https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
+### Tables
+- **Contractors** (Id, Name)
+- **Jobs** (Id, JobName, Status, ContractorId)
+- **FixtureItems** (Id, Name)
+- **BidItems** (Id, Name, Price, Phase, ItemType)
+- **JobFixtureItems** (Id, JobId, FixtureItemId, Quantity, Price)
+- **JobOptions** (Id, JobId, Name, Quantity, Price)
+- **FixtureItemBidItems** (FixtureItemId, BidItemId) - Join table
+
+### Relationships
+- Contractor 1→N Jobs
+- Job 1→N JobFixtureItems
+- Job 1→N JobOptions
+- FixtureItem 1→N JobFixtureItems
+- FixtureItem N→N BidItems (through join table)
 
 ---
 
@@ -299,4 +471,4 @@ High-accuracy AI image recognition + instant SMS delivery + automated billing cr
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | February 2025 | Harold Collins | Initial MVP specification |
+| 1.0 | February 2025 | Development Team | Initial PRD for Plumbing Bidding Tool |
